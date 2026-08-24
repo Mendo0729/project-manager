@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 
 import { useAuth } from './AuthProvider'
 
@@ -45,10 +45,9 @@ export function LoginPage() {
 
         <div className="login-showcase-copy">
           <span className="page-kicker light">Organiza. Prioriza. Avanza.</span>
-          <h1>Del plan al resultado, en un solo lugar.</h1>
+          <h1>Tu trabajo, de la idea al resultado.</h1>
           <p>
-            Cada usuario accede a su propio espacio para organizar proyectos,
-            hitos, semanas y tareas diarias.
+            Proyectos, hitos, semanas y tareas diarias dentro de un mismo espacio.
           </p>
         </div>
       </section>
@@ -63,7 +62,7 @@ export function LoginPage() {
           <span className="page-kicker">Acceso seguro</span>
           <h1 id="login-title">Bienvenido de nuevo</h1>
           <p className="login-copy">
-            Inicia sesión para acceder a tu espacio de trabajo.
+            Inicia sesión para acceder a tu espacio de proyectos y planificación.
           </p>
 
           <form className="login-form" onSubmit={handleSubmit}>
@@ -106,7 +105,7 @@ export function LoginPage() {
           </form>
 
           <p className="login-footnote">
-            Project Manager · Acceso por cuenta
+            ¿No tienes una cuenta? <Link to="/register">Crear cuenta</Link>
           </p>
         </div>
       </section>
