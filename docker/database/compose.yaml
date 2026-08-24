@@ -1,0 +1,27 @@
+name: project-manager-database
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: project-manager-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-project_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-project_manager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-project_manager}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-project_manager} -d ${POSTGRES_DB:-project_manager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      project-manager-backend:
+        aliases:
+          - project-manager-db
+
+networks:
+  project-manager-backend:
+    external: true
+    name: project-manager-backend

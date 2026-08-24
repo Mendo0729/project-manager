@@ -1,0 +1,38 @@
+name: project-manager-app
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    container_name: project-manager-app-dev
+    restart: unless-stopped
+    working_dir: /workspace
+    environment:
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://project_manager:project_manager@project-manager-db:5432/project_manager}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${WEB_HOST_PORT:-5180}:5173"
+      - "${API_HOST_PORT:-3080}:3000"
+    volumes:
+      - .:/workspace
+      - project_manager_node_modules:/workspace/node_modules
+      - project_manager_web_node_modules:/workspace/apps/web/node_modules
+      - project_manager_api_node_modules:/workspace/apps/api/node_modules
+      - project_manager_database_node_modules:/workspace/packages/database/node_modules
+      - project_manager_pnpm_store:/pnpm/store
+    networks:
+      - project-manager-backend
+
+volumes:
+  project_manager_node_modules:
+  project_manager_web_node_modules:
+  project_manager_api_node_modules:
+  project_manager_database_node_modules:
+  project_manager_pnpm_store:
+
+networks:
+  project-manager-backend:
+    external: true
+    name: project-manager-backend

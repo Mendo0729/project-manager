@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Project Manager">
+  <rect width="512" height="512" rx="120" fill="#111827"/>
+  <path d="M138 148h236v52H138zm0 82h236v52H138zm0 82h150v52H138z" fill="#ffffff"/>
+  <circle cx="344" cy="338" r="54" fill="#4f46e5"/>
+  <path d="m320 339 17 17 34-39" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
