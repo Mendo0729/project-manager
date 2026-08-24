@@ -1,7 +1,13 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
-import * as schema from './schema.js'
+import * as authSchema from './auth-schema.js'
+import * as coreSchema from './schema.js'
+
+const schema = {
+  ...coreSchema,
+  ...authSchema,
+}
 
 export type DatabaseConnection = ReturnType<typeof createDatabase>
 
@@ -21,4 +27,5 @@ export function createDatabase(databaseUrl = process.env.DATABASE_URL) {
   return { db, client }
 }
 
+export * from './auth-schema.js'
 export * from './schema.js'
