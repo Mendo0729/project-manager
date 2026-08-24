@@ -4,6 +4,40 @@
 
 El modelo mantiene una única fuente de verdad para proyectos, planificación semanal y planificación diaria. Una tarea no se duplica al aparecer en varias vistas: los campos de planificación determinan dónde se muestra.
 
+## Despliegue de PostgreSQL
+
+PostgreSQL se administra como un stack independiente de la aplicación.
+
+Distribución esperada en el servidor:
+
+```text
+/srv/containers/apps/project-manager
+/srv/containers/databases/project-manager
+/srv/containers/backups/project-manager
+```
+
+El contenedor `project-manager-db-dev` se conecta a la red Docker externa `project-manager-backend` con el alias `project-manager-db`.
+
+La API utiliza una URL interna similar a:
+
+```text
+postgresql://project_manager:***@project-manager-db:5432/project_manager
+```
+
+PostgreSQL no publica el puerto `5432` al host.
+
+La data persistente se almacena mediante bind mount en:
+
+```text
+/srv/containers/databases/project-manager/data
+```
+
+La configuración sensible de PostgreSQL vive en:
+
+```text
+/srv/containers/databases/project-manager/.env
+```
+
 ## Entidades
 
 ### users
@@ -108,12 +142,14 @@ El esquema incluye:
 
 Las migraciones son generadas por Drizzle Kit y deben permanecer versionadas en `packages/database/drizzle/`.
 
-Desde el contenedor de desarrollo:
+Desde el contenedor de aplicación:
 
 ```bash
 docker compose -f compose.dev.yaml exec app pnpm db:generate
 docker compose -f compose.dev.yaml exec app pnpm db:migrate
 ```
+
+Los comandos se conectan a PostgreSQL por `project-manager-backend`; no requieren publicar `5432` en el servidor.
 
 Para inspeccionar la base con Drizzle Studio:
 
