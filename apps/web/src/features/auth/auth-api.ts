@@ -1,4 +1,8 @@
-import type { AuthResponse, LoginInput } from '@project-manager/schemas'
+import type {
+  AuthResponse,
+  LoginInput,
+  RegisterInput,
+} from '@project-manager/schemas'
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, {
@@ -21,6 +25,16 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export function register(input: RegisterInput) {
+  return apiRequest<AuthResponse>('/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  })
 }
 
 export function login(input: LoginInput) {
