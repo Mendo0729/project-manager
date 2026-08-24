@@ -8,6 +8,13 @@
       "when": 1787538389980,
       "tag": "0000_far_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787541034176,
+      "tag": "0001_new_maestro",
+      "breakpoints": true
     }
   ]
 }
