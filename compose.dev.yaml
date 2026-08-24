@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: project-manager-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-project_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-project_manager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-project_manager}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - project_manager_db_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-project_manager} -d ${POSTGRES_DB:-project_manager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  project_manager_db_dev:
