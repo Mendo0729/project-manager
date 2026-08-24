@@ -39,40 +39,17 @@ export function LoginPage() {
           <span className="brand-mark">PM</span>
           <div>
             <strong>Project Manager</strong>
-            <span>Workspace personal</span>
+            <span>Gestión de proyectos</span>
           </div>
         </div>
 
         <div className="login-showcase-copy">
           <span className="page-kicker light">Organiza. Prioriza. Avanza.</span>
-          <h1>Tu trabajo, de la idea al resultado.</h1>
+          <h1>Del plan al resultado, en un solo lugar.</h1>
           <p>
-            Proyectos, hitos, semanas y tareas diarias dentro de un mismo espacio.
+            Cada usuario accede a su propio espacio para organizar proyectos,
+            hitos, semanas y tareas diarias.
           </p>
-        </div>
-
-        <div className="showcase-preview">
-          <div className="showcase-preview-header">
-            <span>Esta semana</span>
-            <strong>68%</strong>
-          </div>
-          <div className="progress-track showcase-progress">
-            <span style={{ width: '68%' }} />
-          </div>
-          <div className="showcase-stats">
-            <div>
-              <strong>17</strong>
-              <span>Completadas</span>
-            </div>
-            <div>
-              <strong>8</strong>
-              <span>Pendientes</span>
-            </div>
-            <div>
-              <strong>3</strong>
-              <span>Proyectos</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -83,10 +60,10 @@ export function LoginPage() {
             <strong>Project Manager</strong>
           </div>
 
-          <span className="page-kicker">Acceso privado</span>
+          <span className="page-kicker">Acceso seguro</span>
           <h1 id="login-title">Bienvenido de nuevo</h1>
           <p className="login-copy">
-            Inicia sesión para continuar con tus proyectos y planificación.
+            Inicia sesión para acceder a tu espacio de trabajo.
           </p>
 
           <form className="login-form" onSubmit={handleSubmit}>
@@ -129,7 +106,7 @@ export function LoginPage() {
           </form>
 
           <p className="login-footnote">
-            Project Manager · MVP privado
+            Project Manager · Acceso por cuenta
           </p>
         </div>
       </section>
