@@ -1,8 +1,19 @@
+import cookie from '@fastify/cookie'
 import { createDatabase } from '@project-manager/database'
 import Fastify from 'fastify'
 
+import { registerAuthRoutes } from './modules/auth/auth.routes.js'
+
 const app = Fastify({ logger: true })
 const database = createDatabase()
+
+await app.register(cookie)
+await app.register(
+  async (authApp) => {
+    await registerAuthRoutes(authApp, database)
+  },
+  { prefix: '/auth' },
+)
 
 app.addHook('onClose', async () => {
   await database.client.end({ timeout: 5 })
