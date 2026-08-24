@@ -3,9 +3,12 @@ import { createDatabase } from '@project-manager/database'
 import Fastify from 'fastify'
 
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
+import { registerProjectRoutes } from './modules/projects/project.routes.js'
 
 const app = Fastify({ logger: true })
 const database = createDatabase()
+
+app.decorateRequest('authUser', null)
 
 await app.register(cookie)
 await app.register(
@@ -13,6 +16,12 @@ await app.register(
     await registerAuthRoutes(authApp, database)
   },
   { prefix: '/auth' },
+)
+await app.register(
+  async (projectApp) => {
+    await registerProjectRoutes(projectApp, database)
+  },
+  { prefix: '/projects' },
 )
 
 app.addHook('onClose', async () => {
