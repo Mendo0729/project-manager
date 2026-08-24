@@ -98,6 +98,9 @@ export function DashboardPage() {
               <span className="sr-only">Buscar</span>
               <input aria-label="Buscar" placeholder="Buscar en tu espacio…" type="search" />
             </label>
+            <button className="text-button" onClick={() => void logout()} type="button">
+              Cerrar sesión
+            </button>
             <button className="primary-button" type="button">
               Nueva tarea
             </button>
