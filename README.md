@@ -31,6 +31,13 @@ Bootstrap inicial con capa de datos en PostgreSQL + Drizzle ORM.
 
 La aplicación y PostgreSQL son stacks Docker independientes. Se comunican exclusivamente mediante la red externa `project-manager-backend`. PostgreSQL no publica `5432` al host.
 
+Los proyectos Compose tienen nombres distintos para mantener aislado su ciclo de vida:
+
+- aplicación: `project-manager-app`
+- base de datos: `project-manager-database`
+
+Esto evita que `docker compose ps`, `up` o `down` de la aplicación considere a PostgreSQL como un contenedor huérfano del mismo proyecto.
+
 ## Estructura del repositorio
 
 ```text
