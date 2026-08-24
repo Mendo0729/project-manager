@@ -1,4 +1,8 @@
-import type { AuthUser, LoginInput } from '@project-manager/schemas'
+import type {
+  AuthUser,
+  LoginInput,
+  RegisterInput,
+} from '@project-manager/schemas'
 import {
   createContext,
   useCallback,
@@ -14,6 +18,7 @@ import * as authApi from './auth-api'
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
+  register: (input: RegisterInput) => Promise<void>
   login: (input: LoginInput) => Promise<void>
   logout: () => Promise<void>
 }
@@ -50,6 +55,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [])
 
+  const register = useCallback(async (input: RegisterInput) => {
+    const response = await authApi.register(input)
+    setUser(response.user)
+  }, [])
+
   const login = useCallback(async (input: LoginInput) => {
     const response = await authApi.login(input)
     setUser(response.user)
@@ -61,8 +71,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, logout }),
-    [user, loading, login, logout],
+    () => ({ user, loading, register, login, logout }),
+    [user, loading, register, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
