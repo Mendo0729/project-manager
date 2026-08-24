@@ -7,12 +7,12 @@ services:
     restart: unless-stopped
     working_dir: /workspace
     environment:
-      PORT: ${PORT:-3000}
+      PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-project_manager}:${POSTGRES_PASSWORD:-project_manager}@db:5432/${POSTGRES_DB:-project_manager}
       CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "5173:5173"
-      - "3000:3000"
+      - "${WEB_HOST_PORT:-5180}:5173"
+      - "${API_HOST_PORT:-3080}:3000"
     volumes:
       - .:/workspace
       - project_manager_node_modules:/workspace/node_modules
@@ -31,8 +31,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-project_manager}
       POSTGRES_USER: ${POSTGRES_USER:-project_manager}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-project_manager}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - project_manager_db_dev:/var/lib/postgresql/data
     healthcheck:
