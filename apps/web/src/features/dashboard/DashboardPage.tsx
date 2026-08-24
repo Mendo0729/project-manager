@@ -1,39 +1,36 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import type { ProjectDto } from '@project-manager/schemas'
 
 import { useAuth } from '../auth/AuthProvider'
-
-const projects = [
-  {
-    name: 'Project Manager PWA',
-    status: 'En progreso',
-    progress: 42,
-    meta: '8 de 19 tareas',
-  },
-  {
-    name: 'Portafolio MendoTech',
-    status: 'En progreso',
-    progress: 76,
-    meta: '13 de 17 tareas',
-  },
-  {
-    name: 'Catálogo de perfumes',
-    status: 'Planificado',
-    progress: 18,
-    meta: '2 de 11 tareas',
-  },
-]
-
-const todayTasks = [
-  { title: 'Validar autenticación de la PWA', project: 'Project Manager', done: true },
-  { title: 'Definir pantalla inicial de proyectos', project: 'Project Manager', done: false },
-  { title: 'Revisar pendientes de infraestructura', project: 'MendoTech', done: false },
-  { title: 'Organizar tareas de la semana', project: 'Personal', done: false },
-]
-
-const navigation = ['Resumen', 'Proyectos', 'Esta semana', 'Hoy', 'Historial']
+import { listProjects } from '../projects/projects-api'
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
+  const [projects, setProjects] = useState<ProjectDto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    listProjects({ archived: 'false', sort: 'updated' })
+      .then((items) => {
+        if (active) setProjects(items)
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los proyectos.')
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const currentDate = useMemo(
     () =>
@@ -45,6 +42,13 @@ export function DashboardPage() {
     [],
   )
 
+  const activeProjects = projects.filter((project) => project.status === 'active')
+  const completedProjects = projects.filter((project) => project.status === 'completed')
+  const plannedProjects = projects.filter((project) => project.status === 'planned')
+  const nearestDeadline = [...projects]
+    .filter((project) => project.targetDate && project.status !== 'completed')
+    .sort((left, right) => (left.targetDate ?? '').localeCompare(right.targetDate ?? ''))[0]
+
   return (
     <div className="workspace-shell">
       <aside className="sidebar">
@@ -52,21 +56,16 @@ export function DashboardPage() {
           <span className="brand-mark">PM</span>
           <div>
             <strong>Project Manager</strong>
-            <span>Workspace personal</span>
+            <span>Gestión de proyectos</span>
           </div>
         </div>
 
         <nav className="side-nav" aria-label="Navegación principal">
-          {navigation.map((item, index) => (
-            <button
-              className={index === 0 ? 'nav-item active' : 'nav-item'}
-              key={item}
-              type="button"
-            >
-              <span className="nav-dot" aria-hidden="true" />
-              {item}
-            </button>
-          ))}
+          <Link className="nav-item active" to="/">Resumen</Link>
+          <Link className="nav-item" to="/projects">Proyectos</Link>
+          <span className="nav-item nav-item-disabled">Esta semana</span>
+          <span className="nav-item nav-item-disabled">Hoy</span>
+          <span className="nav-item nav-item-disabled">Historial</span>
         </nav>
 
         <div className="sidebar-footer">
@@ -94,138 +93,104 @@ export function DashboardPage() {
           </div>
 
           <div className="header-actions">
-            <label className="search-field">
-              <span className="sr-only">Buscar</span>
-              <input aria-label="Buscar" placeholder="Buscar en tu espacio…" type="search" />
-            </label>
-            <button className="text-button" onClick={() => void logout()} type="button">
-              Cerrar sesión
-            </button>
-            <button className="primary-button" type="button">
-              Nueva tarea
-            </button>
+            <Link className="secondary-button project-action-link" to="/projects">Ver proyectos</Link>
+            <Link className="primary-button project-action-link" to="/projects/new">Nuevo proyecto</Link>
           </div>
         </header>
 
-        <div className="preview-banner">
-          Vista preliminar · Los datos mostrados son ejemplos hasta conectar los módulos reales.
-        </div>
+        {error ? <p className="form-error dashboard-error">{error}</p> : null}
 
         <section className="metrics-grid" aria-label="Resumen general">
           <article className="metric-card">
             <span>Proyectos activos</span>
-            <strong>3</strong>
-            <small>1 próximo a completar</small>
+            <strong>{loading ? '—' : activeProjects.length}</strong>
+            <small>Datos reales de tu cuenta</small>
           </article>
           <article className="metric-card">
-            <span>Tareas pendientes</span>
-            <strong>8</strong>
-            <small>4 programadas para hoy</small>
+            <span>Planificados</span>
+            <strong>{loading ? '—' : plannedProjects.length}</strong>
+            <small>Pendientes de iniciar</small>
           </article>
           <article className="metric-card">
-            <span>Progreso semanal</span>
-            <strong>68%</strong>
-            <small>17 de 25 completadas</small>
+            <span>Completados</span>
+            <strong>{loading ? '—' : completedProjects.length}</strong>
+            <small>Proyectos terminados</small>
           </article>
           <article className="metric-card">
-            <span>Tiempo registrado</span>
-            <strong>2h 40m</strong>
-            <small>Hoy</small>
+            <span>Total visible</span>
+            <strong>{loading ? '—' : projects.length}</strong>
+            <small>Sin contar archivados</small>
           </article>
         </section>
 
         <section className="dashboard-grid">
           <div className="dashboard-column dashboard-column-main">
-            <article className="panel focus-panel">
-              <div className="panel-heading">
-                <div>
-                  <span className="panel-label">Objetivo semanal</span>
-                  <h2>Completar la base funcional de Project Manager</h2>
-                </div>
-                <span className="status-pill">Semana actual</span>
-              </div>
-
-              <p>
-                Dejar lista la autenticación, navegación inicial y estructura necesaria
-                para comenzar el módulo de proyectos.
-              </p>
-
-              <div className="progress-row">
-                <div className="progress-track" aria-label="68% completado">
-                  <span style={{ width: '68%' }} />
-                </div>
-                <strong>68%</strong>
-              </div>
-            </article>
-
             <article className="panel">
               <div className="panel-heading compact">
                 <div>
                   <span className="panel-label">Proyectos</span>
-                  <h2>En movimiento</h2>
+                  <h2>Actualizados recientemente</h2>
                 </div>
-                <button className="link-button" type="button">Ver todos</button>
+                <Link className="link-button" to="/projects">Ver todos</Link>
               </div>
 
-              <div className="project-list">
-                {projects.map((project) => (
-                  <div className="project-row" key={project.name}>
-                    <div className="project-icon" aria-hidden="true">
-                      {project.name.slice(0, 1)}
-                    </div>
-                    <div className="project-info">
-                      <div className="project-title-row">
-                        <div>
-                          <strong>{project.name}</strong>
-                          <span>{project.meta}</span>
+              {loading ? (
+                <p className="projects-empty">Cargando…</p>
+              ) : projects.length === 0 ? (
+                <div className="projects-empty">
+                  <p>Aún no tienes proyectos.</p>
+                  <Link className="link-button" to="/projects/new">Crear el primero</Link>
+                </div>
+              ) : (
+                <div className="project-list">
+                  {projects.slice(0, 4).map((project) => (
+                    <Link className="project-row project-row-link" key={project.id} to={`/projects/${project.id}`}>
+                      <div className="project-icon" aria-hidden="true">{project.name.slice(0, 1)}</div>
+                      <div className="project-info">
+                        <div className="project-title-row">
+                          <div>
+                            <strong>{project.name}</strong>
+                            <span>{project.status} · {project.priority}</span>
+                          </div>
+                          <span className="project-status">{project.progress}%</span>
                         </div>
-                        <span className="project-status">{project.status}</span>
+                        <div className="progress-track small">
+                          <span style={{ width: `${project.progress}%` }} />
+                        </div>
                       </div>
-                      <div className="progress-track small">
-                        <span style={{ width: `${project.progress}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </article>
           </div>
 
           <div className="dashboard-column">
-            <article className="panel today-panel">
-              <div className="panel-heading compact">
-                <div>
-                  <span className="panel-label">Hoy</span>
-                  <h2>Prioridades del día</h2>
-                </div>
-                <span className="counter-pill">1 / 4</span>
-              </div>
-
-              <div className="task-list">
-                {todayTasks.map((task) => (
-                  <div className={task.done ? 'task-row done' : 'task-row'} key={task.title}>
-                    <span className="task-check" aria-hidden="true">
-                      {task.done ? '✓' : ''}
-                    </span>
-                    <div>
-                      <strong>{task.title}</strong>
-                      <span>{task.project}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-
             <article className="panel deadline-panel">
               <span className="panel-label">Próximo vencimiento</span>
-              <div className="deadline-date">
-                <strong>28</strong>
-                <span>AGO</span>
-              </div>
-              <div>
-                <h2>Finalizar módulo de autenticación</h2>
-                <p>Project Manager PWA</p>
-              </div>
+              {nearestDeadline ? (
+                <>
+                  <div className="deadline-date">
+                    <strong>{nearestDeadline.targetDate?.slice(8, 10)}</strong>
+                    <span>{nearestDeadline.targetDate?.slice(5, 7)}</span>
+                  </div>
+                  <div>
+                    <h2>{nearestDeadline.name}</h2>
+                    <p>{nearestDeadline.targetDate}</p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <h2>Sin vencimientos</h2>
+                  <p>No hay proyectos pendientes con fecha objetivo.</p>
+                </div>
+              )}
+            </article>
+
+            <article className="panel project-placeholder-card">
+              <span className="panel-label">Próximas fases</span>
+              <h2>Tareas y planificación</h2>
+              <p>Se habilitarán cuando completemos los módulos correspondientes.</p>
             </article>
           </div>
         </section>
