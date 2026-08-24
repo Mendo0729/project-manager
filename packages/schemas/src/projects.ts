@@ -17,6 +17,10 @@ export const projectPrioritySchema = z.enum([
 
 export const projectProgressModeSchema = z.enum(['automatic', 'manual'])
 
+export const projectParamsSchema = z.object({
+  projectId: z.string().uuid('Identificador de proyecto inválido.'),
+})
+
 const nullableDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe usar el formato YYYY-MM-DD')
