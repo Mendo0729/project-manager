@@ -1,4 +1,28 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    container_name: project-manager-app-dev
+    restart: unless-stopped
+    working_dir: /workspace
+    environment:
+      PORT: ${PORT:-3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-project_manager}:${POSTGRES_PASSWORD:-project_manager}@db:5432/${POSTGRES_DB:-project_manager}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+      - "3000:3000"
+    volumes:
+      - .:/workspace
+      - project_manager_node_modules:/workspace/node_modules
+      - project_manager_web_node_modules:/workspace/apps/web/node_modules
+      - project_manager_api_node_modules:/workspace/apps/api/node_modules
+      - project_manager_pnpm_store:/pnpm/store
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:17-alpine
     container_name: project-manager-db-dev
@@ -19,3 +43,7 @@ services:
 
 volumes:
   project_manager_db_dev:
+  project_manager_node_modules:
+  project_manager_web_node_modules:
+  project_manager_api_node_modules:
+  project_manager_pnpm_store:
