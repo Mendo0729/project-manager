@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@project-manager/database": "workspace:*",
     "fastify": "5.12.1"
   },
   "devDependencies": {
