@@ -6,11 +6,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @project-manager/database build && pnpm --parallel --filter @project-manager/web --filter @project-manager/api dev",
+    "build:deps": "pnpm --filter @project-manager/schemas build && pnpm --filter @project-manager/database build",
+    "dev": "pnpm build:deps && pnpm --parallel --filter @project-manager/web --filter @project-manager/api dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm --filter @project-manager/database build && pnpm -r typecheck",
+    "typecheck": "pnpm build:deps && pnpm -r typecheck",
     "db:generate": "pnpm --filter @project-manager/database db:generate",
     "db:migrate": "pnpm --filter @project-manager/database db:migrate",
-    "db:studio": "pnpm --filter @project-manager/database db:studio"
+    "db:studio": "pnpm --filter @project-manager/database db:studio",
+    "auth:create-user": "pnpm --filter @project-manager/api auth:create-user"
   }
 }
