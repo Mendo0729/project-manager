@@ -1,39 +1,17 @@
-const sections = [
-  {
-    title: 'Proyectos',
-    description: 'Organiza proyectos, hitos y tareas y mide su avance.',
-  },
-  {
-    title: 'Esta semana',
-    description: 'Define lo importante de la semana y monitorea lo completado.',
-  },
-  {
-    title: 'Hoy',
-    description: 'Concéntrate en las tareas programadas para el día.',
-  },
-]
+import { Navigate, Route, Routes } from 'react-router-dom'
+
+import { LoginPage } from './features/auth/LoginPage'
+import { ProtectedRoute } from './features/auth/ProtectedRoute'
+import { DashboardPage } from './features/dashboard/DashboardPage'
 
 export default function App() {
   return (
-    <main className="app-shell">
-      <section className="hero">
-        <span className="eyebrow">Project Manager · MVP</span>
-        <h1>Proyectos, semana y día en un solo lugar.</h1>
-        <p>
-          Base inicial de la PWA. El siguiente paso será conectar estas vistas al
-          modelo real de proyectos y tareas.
-        </p>
-      </section>
-
-      <section className="grid" aria-label="Módulos principales">
-        {sections.map((section) => (
-          <article className="card" key={section.title}>
-            <h2>{section.title}</h2>
-            <p>{section.description}</p>
-            <span>Preparado para implementar</span>
-          </article>
-        ))}
-      </section>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<DashboardPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
