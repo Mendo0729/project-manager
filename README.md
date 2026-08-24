@@ -4,14 +4,16 @@ PWA personal para gestionar proyectos, planificación semanal y tareas diarias d
 
 ## Estado
 
-Bootstrap inicial del proyecto.
+Bootstrap inicial con capa de datos en PostgreSQL + Drizzle ORM.
 
 ## Stack
 
 - React + TypeScript + Vite
 - Vite PWA
 - Node.js + Fastify
-- PostgreSQL
+- PostgreSQL 17
+- Drizzle ORM + Drizzle Kit
+- Postgres.js
 - pnpm workspaces
 - Docker Compose
 
@@ -19,13 +21,18 @@ Bootstrap inicial del proyecto.
 
 ```text
 apps/
-  web/    Frontend PWA
-  api/    API REST
+  web/                    Frontend PWA
+  api/                    API REST
 
-docs/    Decisiones de arquitectura
+packages/
+  database/               Esquema, cliente y migraciones Drizzle
+
+docs/
+  architecture.md
+  database.md
 
 docker/
-  dev/    Runtime de desarrollo aislado
+  dev/                    Runtime de desarrollo aislado
 ```
 
 ## Requisitos del host
@@ -60,6 +67,21 @@ WEB_HOST_PORT=5180
 API_HOST_PORT=3080
 ```
 
+## Healthcheck
+
+`GET /health` comprueba tanto Fastify como una consulta real a PostgreSQL.
+
+Respuesta esperada:
+
+```json
+{
+  "ok": true,
+  "service": "project-manager-api",
+  "database": "up",
+  "timestamp": "..."
+}
+```
+
 ## Logs
 
 ```bash
@@ -81,15 +103,29 @@ Para abrir una shell dentro del contenedor:
 docker compose -f compose.dev.yaml exec app sh
 ```
 
-Dentro de la shell puedes ejecutar normalmente:
+No es necesario ejecutar un segundo `pnpm dev`: el proceso de desarrollo ya es el comando principal del contenedor.
+
+## Base de datos
+
+Generar una migración a partir del esquema Drizzle:
 
 ```bash
-pnpm install
-pnpm typecheck
-pnpm build
+docker compose -f compose.dev.yaml exec app pnpm db:generate
 ```
 
-No es necesario ejecutar un segundo `pnpm dev`: el proceso de desarrollo ya es el comando principal del contenedor.
+Aplicar migraciones pendientes:
+
+```bash
+docker compose -f compose.dev.yaml exec app pnpm db:migrate
+```
+
+Abrir Drizzle Studio:
+
+```bash
+docker compose -f compose.dev.yaml exec app pnpm db:studio
+```
+
+Las migraciones generadas deben quedar versionadas en Git dentro de `packages/database/drizzle/`.
 
 ## Detener el entorno
 
@@ -103,4 +139,4 @@ Los datos de PostgreSQL y las dependencias permanecen en volúmenes Docker. Para
 docker compose -f compose.dev.yaml down -v
 ```
 
-Consulta `docs/architecture.md` para el alcance y las decisiones iniciales.
+Consulta `docs/architecture.md` para el alcance inicial y `docs/database.md` para el modelo de datos.
