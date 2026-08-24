@@ -45,12 +45,20 @@ cp .env.example .env
 docker compose -f compose.dev.yaml up -d --build
 ```
 
-Servicios locales:
+Puertos externos por defecto:
 
-- Web: http://localhost:5173
-- API: http://localhost:3000
-- Health: http://localhost:3000/health
-- PostgreSQL: localhost:5432 (solo loopback)
+- Web: http://localhost:5180
+- API: http://localhost:3080
+- Health: http://localhost:3080/health
+
+Los puertos internos siguen siendo `5173` para Vite y `3000` para Fastify. PostgreSQL no publica ningún puerto al host; la API lo consume exclusivamente por la red Docker usando `db:5432`.
+
+Los puertos externos pueden cambiarse en `.env`:
+
+```env
+WEB_HOST_PORT=5180
+API_HOST_PORT=3080
+```
 
 ## Logs
 
@@ -79,8 +87,9 @@ Dentro de la shell puedes ejecutar normalmente:
 pnpm install
 pnpm typecheck
 pnpm build
-pnpm dev
 ```
+
+No es necesario ejecutar un segundo `pnpm dev`: el proceso de desarrollo ya es el comando principal del contenedor.
 
 ## Detener el entorno
 
