@@ -7,6 +7,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage'
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage'
 import { ProjectFormPage } from './features/projects/ProjectFormPage'
 import { ProjectsPage } from './features/projects/ProjectsPage'
+import './features/projects/projects.css'
 
 export default function App() {
   return (
