@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyReply } from 'fastify'
-import { z } from 'zod'
 
 import type { DatabaseConnection } from '@project-manager/database'
 import {
   createProjectSchema,
   projectFiltersSchema,
+  projectParamsSchema,
   updateProjectSchema,
 } from '@project-manager/schemas'
 
@@ -17,10 +17,6 @@ import {
   getProjects,
   updateProject,
 } from './project.service.js'
-
-const projectParamsSchema = z.object({
-  projectId: z.string().uuid('Identificador de proyecto inválido.'),
-})
 
 function sendKnownError(error: unknown, reply: FastifyReply) {
   if (error instanceof ProjectNotFoundError) {
