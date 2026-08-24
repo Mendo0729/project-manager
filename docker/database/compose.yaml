@@ -1,3 +1,5 @@
+name: project-manager-database
+
 services:
   db:
     image: postgres:17-alpine
