@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -168,7 +169,13 @@ export const tasks = pgTable(
     index('tasks_user_planned_week_idx').on(table.userId, table.plannedWeek),
     index('tasks_project_idx').on(table.projectId),
     index('tasks_milestone_idx').on(table.milestoneId),
+    index('tasks_parent_task_idx').on(table.parentTaskId),
     index('tasks_due_date_idx').on(table.dueDate),
+    foreignKey({
+      columns: [table.parentTaskId],
+      foreignColumns: [table.id],
+      name: 'tasks_parent_task_id_tasks_id_fk',
+    }).onDelete('set null'),
     check(
       'tasks_estimated_minutes_nonnegative',
       sql`${table.estimatedMinutes} is null or ${table.estimatedMinutes} >= 0`,
