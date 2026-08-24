@@ -6,8 +6,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @project-manager/web --filter @project-manager/api dev",
+    "dev": "pnpm --filter @project-manager/database build && pnpm --parallel --filter @project-manager/web --filter @project-manager/api dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm --filter @project-manager/database build && pnpm -r typecheck",
+    "db:generate": "pnpm --filter @project-manager/database db:generate",
+    "db:migrate": "pnpm --filter @project-manager/database db:migrate",
+    "db:studio": "pnpm --filter @project-manager/database db:studio"
   }
 }
