@@ -10,6 +10,7 @@ import { ProjectDetailPage } from './features/projects/ProjectDetailPage'
 import { ProjectFormPage } from './features/projects/ProjectFormPage'
 import { ProjectsPage } from './features/projects/ProjectsPage'
 import './features/projects/projects.css'
+import './features/milestones/milestones.css'
 
 export default function App() {
   return (
