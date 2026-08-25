@@ -10,6 +10,7 @@ import {
   addProjectActivity,
   findProjectById,
   insertProject,
+  listProjectMilestoneProgressRows,
   listProjects,
   updateProjectById,
 } from './project.repository.js'
@@ -25,13 +26,65 @@ function validateDates(startDate: string | null, targetDate: string | null) {
   }
 }
 
+function calculateAutomaticProgress(
+  rows: Array<{
+    status: 'planned' | 'active' | 'completed' | 'canceled'
+    weight: number
+  }>,
+) {
+  const included = rows.filter((row) => row.status !== 'canceled')
+  const totalWeight = included.reduce((total, row) => total + row.weight, 0)
+
+  if (totalWeight === 0) {
+    return 0
+  }
+
+  const completedWeight = included
+    .filter((row) => row.status === 'completed')
+    .reduce((total, row) => total + row.weight, 0)
+
+  return Math.round((completedWeight / totalWeight) * 100)
+}
+
+async function getAutomaticProgressMap(
+  database: DatabaseConnection,
+  projectIds: string[],
+) {
+  const rows = await listProjectMilestoneProgressRows(database, projectIds)
+  const grouped = new Map<
+    string,
+    Array<{
+      status: 'planned' | 'active' | 'completed' | 'canceled'
+      weight: number
+    }>
+  >()
+
+  for (const row of rows) {
+    const projectRows = grouped.get(row.projectId) ?? []
+    projectRows.push({ status: row.status, weight: row.weight })
+    grouped.set(row.projectId, projectRows)
+  }
+
+  return new Map(
+    projectIds.map((projectId) => [
+      projectId,
+      calculateAutomaticProgress(grouped.get(projectId) ?? []),
+    ]),
+  )
+}
+
 export async function getProjects(
   database: DatabaseConnection,
   userId: string,
   filters: ProjectFilters,
 ) {
   const rows = await listProjects(database, userId, filters)
-  return rows.map(mapProject)
+  const progress = await getAutomaticProgressMap(
+    database,
+    rows.filter((row) => row.progressMode === 'automatic').map((row) => row.id),
+  )
+
+  return rows.map((row) => mapProject(row, progress.get(row.id) ?? 0))
 }
 
 export async function getProject(
@@ -45,7 +98,12 @@ export async function getProject(
     throw new ProjectNotFoundError('Proyecto no encontrado.')
   }
 
-  return mapProject(project)
+  const progress =
+    project.progressMode === 'automatic'
+      ? await getAutomaticProgressMap(database, [project.id])
+      : new Map<string, number>()
+
+  return mapProject(project, progress.get(project.id) ?? 0)
 }
 
 export async function createProject(
@@ -90,7 +148,7 @@ export async function createProject(
     },
   })
 
-  return mapProject(project)
+  return mapProject(project, 0)
 }
 
 export async function updateProject(
@@ -168,5 +226,10 @@ export async function updateProject(
     },
   })
 
-  return mapProject(updated)
+  const progress =
+    updated.progressMode === 'automatic'
+      ? await getAutomaticProgressMap(database, [updated.id])
+      : new Map<string, number>()
+
+  return mapProject(updated, progress.get(updated.id) ?? 0)
 }
