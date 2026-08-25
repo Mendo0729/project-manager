@@ -4,6 +4,8 @@ import { LoginPage } from './features/auth/LoginPage'
 import { ProtectedRoute } from './features/auth/ProtectedRoute'
 import { RegisterPage } from './features/auth/RegisterPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
+import { MilestoneDetailPage } from './features/milestones/MilestoneDetailPage'
+import { MilestoneFormPage } from './features/milestones/MilestoneFormPage'
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage'
 import { ProjectFormPage } from './features/projects/ProjectFormPage'
 import { ProjectsPage } from './features/projects/ProjectsPage'
@@ -20,6 +22,18 @@ export default function App() {
         <Route path="/projects/new" element={<ProjectFormPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="/projects/:projectId/edit" element={<ProjectFormPage />} />
+        <Route
+          path="/projects/:projectId/milestones/new"
+          element={<MilestoneFormPage />}
+        />
+        <Route
+          path="/projects/:projectId/milestones/:milestoneId"
+          element={<MilestoneDetailPage />}
+        />
+        <Route
+          path="/projects/:projectId/milestones/:milestoneId/edit"
+          element={<MilestoneFormPage />}
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
