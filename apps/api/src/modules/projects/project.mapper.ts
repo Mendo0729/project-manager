@@ -16,7 +16,17 @@ export interface ProjectRecord {
   updatedAt: Date
 }
 
-export function mapProject(record: ProjectRecord): ProjectDto {
+export function mapProject(
+  record: ProjectRecord,
+  automaticProgress = 0,
+): ProjectDto {
+  const progress =
+    record.status === 'completed'
+      ? 100
+      : record.progressMode === 'manual'
+        ? (record.manualProgress ?? 0)
+        : automaticProgress
+
   return {
     id: record.id,
     name: record.name,
@@ -26,10 +36,7 @@ export function mapProject(record: ProjectRecord): ProjectDto {
     startDate: record.startDate,
     targetDate: record.targetDate,
     progressMode: record.progressMode,
-    progress:
-      record.progressMode === 'manual'
-        ? (record.manualProgress ?? 0)
-        : 0,
+    progress,
     manualProgress: record.manualProgress,
     completedAt: record.completedAt?.toISOString() ?? null,
     archivedAt: record.archivedAt?.toISOString() ?? null,
