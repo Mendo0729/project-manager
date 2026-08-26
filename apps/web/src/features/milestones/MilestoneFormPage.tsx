@@ -90,7 +90,7 @@ export function MilestoneFormPage() {
   }
 
   if (loading) {
-    return <main className="auth-loading">Cargando hito…</main>
+    return <div className="content-loading">Cargando hito…</div>
   }
 
   const cancelTo =
@@ -101,17 +101,15 @@ export function MilestoneFormPage() {
         : '/projects'
 
   return (
-    <main className="project-form-shell">
+    <section className="project-form-shell">
       <div className="project-form-header">
         <div>
-          <span className="page-kicker">
-            {editing ? 'Editar hito' : 'Nuevo hito'}
-          </span>
+          <Link className="project-back-link" to={cancelTo}>
+            ← Volver
+          </Link>
+          <span className="page-kicker">{editing ? 'Editar hito' : 'Nuevo hito'}</span>
           <h1>{editing ? 'Actualiza el hito' : 'Crea un hito'}</h1>
         </div>
-        <Link className="text-button project-back-link" to={cancelTo}>
-          Volver
-        </Link>
       </div>
 
       <form className="panel project-form" onSubmit={handleSubmit}>
@@ -139,9 +137,7 @@ export function MilestoneFormPage() {
           <label>
             Estado
             <select
-              onChange={(event) =>
-                setStatus(event.target.value as MilestoneStatus)
-              }
+              onChange={(event) => setStatus(event.target.value as MilestoneStatus)}
               value={status}
             >
               <option value="planned">Planificado</option>
@@ -174,7 +170,7 @@ export function MilestoneFormPage() {
         </div>
 
         <div className="automatic-progress-note">
-          En esta fase, un hito completado aporta 100% de su peso al progreso automático del proyecto. Los hitos cancelados no se contabilizan.
+          Un hito completado aporta 100% de su peso al progreso automático del proyecto. Los hitos cancelados no se contabilizan.
         </div>
 
         {error ? <p className="form-error">{error}</p> : null}
@@ -192,6 +188,6 @@ export function MilestoneFormPage() {
           </button>
         </div>
       </form>
-    </main>
+    </section>
   )
 }
