@@ -43,7 +43,11 @@ export function ProjectFormPage() {
       })
       .catch((loadError) => {
         if (active) {
-          setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el proyecto.')
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'No se pudo cargar el proyecto.',
+          )
         }
       })
       .finally(() => {
@@ -91,36 +95,54 @@ export function ProjectFormPage() {
   }
 
   if (loading) {
-    return <main className="auth-loading">Cargando proyecto…</main>
+    return <div className="content-loading">Cargando proyecto…</div>
   }
 
   return (
-    <main className="project-form-shell">
+    <section className="project-form-shell">
       <div className="project-form-header">
         <div>
-          <span className="page-kicker">{editing ? 'Editar proyecto' : 'Nuevo proyecto'}</span>
+          <Link
+            className="project-back-link"
+            to={projectId ? `/projects/${projectId}` : '/projects'}
+          >
+            ← Volver
+          </Link>
+          <span className="page-kicker">
+            {editing ? 'Editar proyecto' : 'Nuevo proyecto'}
+          </span>
           <h1>{editing ? 'Actualiza el proyecto' : 'Crea un proyecto'}</h1>
         </div>
-        <Link className="text-button project-back-link" to={projectId ? `/projects/${projectId}` : '/projects'}>
-          Volver
-        </Link>
       </div>
 
       <form className="panel project-form" onSubmit={handleSubmit}>
         <label>
           Nombre
-          <input maxLength={180} onChange={(event) => setName(event.target.value)} required value={name} />
+          <input
+            maxLength={180}
+            onChange={(event) => setName(event.target.value)}
+            required
+            value={name}
+          />
         </label>
 
         <label>
           Descripción
-          <textarea maxLength={5000} onChange={(event) => setDescription(event.target.value)} rows={5} value={description} />
+          <textarea
+            maxLength={5000}
+            onChange={(event) => setDescription(event.target.value)}
+            rows={5}
+            value={description}
+          />
         </label>
 
         <div className="project-form-grid">
           <label>
             Estado
-            <select onChange={(event) => setStatus(event.target.value as ProjectStatus)} value={status}>
+            <select
+              onChange={(event) => setStatus(event.target.value as ProjectStatus)}
+              value={status}
+            >
               <option value="planned">Planificado</option>
               <option value="active">Activo</option>
               <option value="paused">Pausado</option>
@@ -131,7 +153,10 @@ export function ProjectFormPage() {
 
           <label>
             Prioridad
-            <select onChange={(event) => setPriority(event.target.value as ProjectPriority)} value={priority}>
+            <select
+              onChange={(event) => setPriority(event.target.value as ProjectPriority)}
+              value={priority}
+            >
               <option value="low">Baja</option>
               <option value="medium">Media</option>
               <option value="high">Alta</option>
@@ -141,18 +166,28 @@ export function ProjectFormPage() {
 
           <label>
             Fecha de inicio
-            <input onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} />
+            <input
+              onChange={(event) => setStartDate(event.target.value)}
+              type="date"
+              value={startDate}
+            />
           </label>
 
           <label>
             Fecha objetivo
-            <input onChange={(event) => setTargetDate(event.target.value)} type="date" value={targetDate} />
+            <input
+              onChange={(event) => setTargetDate(event.target.value)}
+              type="date"
+              value={targetDate}
+            />
           </label>
 
           <label>
             Progreso
             <select
-              onChange={(event) => setProgressMode(event.target.value as ProjectProgressMode)}
+              onChange={(event) =>
+                setProgressMode(event.target.value as ProjectProgressMode)
+              }
               value={progressMode}
             >
               <option value="automatic">Automático</option>
@@ -173,7 +208,7 @@ export function ProjectFormPage() {
             </label>
           ) : (
             <div className="automatic-progress-note">
-              El progreso automático permanecerá en 0% hasta conectar tareas e hitos.
+              El progreso automático se calcula con los hitos no cancelados y su peso.
             </div>
           )}
         </div>
@@ -181,7 +216,10 @@ export function ProjectFormPage() {
         {error ? <p className="form-error">{error}</p> : null}
 
         <div className="project-form-actions">
-          <Link className="secondary-button project-action-link" to={projectId ? `/projects/${projectId}` : '/projects'}>
+          <Link
+            className="secondary-button project-action-link"
+            to={projectId ? `/projects/${projectId}` : '/projects'}
+          >
             Cancelar
           </Link>
           <button className="primary-button" disabled={submitting} type="submit">
@@ -189,6 +227,6 @@ export function ProjectFormPage() {
           </button>
         </div>
       </form>
-    </main>
+    </section>
   )
 }
