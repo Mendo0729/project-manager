@@ -68,31 +68,30 @@ export function MilestoneDetailPage() {
   }
 
   if (loading) {
-    return <main className="auth-loading">Cargando hito…</main>
+    return <div className="content-loading">Cargando hito…</div>
   }
 
   if (!milestone || !projectId) {
     return (
-      <main className="project-form-shell">
+      <section className="project-form-shell">
         <p className="form-error">{error ?? 'Hito no encontrado.'}</p>
-        <Link className="text-button project-back-link" to="/projects">
-          Volver a proyectos
+        <Link className="project-back-link" to="/projects">
+          ← Volver a proyectos
         </Link>
-      </main>
+      </section>
     )
   }
 
   return (
-    <main className="project-detail-shell">
+    <section className="project-detail-shell">
       <div className="project-detail-header">
         <div>
-          <Link
-            className="text-button project-back-link"
-            to={`/projects/${projectId}`}
-          >
+          <Link className="project-back-link" to={`/projects/${projectId}`}>
             ← Proyecto
           </Link>
-          <span className="page-kicker">{statusLabels[milestone.status]}</span>
+          <span className={`status-badge ${milestone.status}`}>
+            {statusLabels[milestone.status]}
+          </span>
           <h1>{milestone.name}</h1>
           <p>{milestone.description || 'Sin descripción.'}</p>
         </div>
@@ -204,6 +203,6 @@ export function MilestoneDetailPage() {
           <p>Las tareas vinculadas a este hito se implementarán en la Fase 5.</p>
         </article>
       </section>
-    </main>
+    </section>
   )
 }
