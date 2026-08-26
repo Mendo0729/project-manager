@@ -1,0 +1,16 @@
+.content-loading {
+  min-height: 42vh;
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.project-detail-header .status-badge {
+  margin-bottom: 10px;
+}
+
+html.dark {
+  color-scheme: dark;
+}
