@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { useAuth } from '../../features/auth/AuthProvider'
@@ -53,7 +53,7 @@ export function WorkspaceLayout() {
                 height: star.size,
                 '--star-duration': star.duration,
                 '--star-delay': star.delay,
-              } as React.CSSProperties
+              } as CSSProperties
             }
           />
         ))}
