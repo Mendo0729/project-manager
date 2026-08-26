@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { useAuth } from '../../features/auth/AuthProvider'
+import './workspace.css'
 
 function getInitialTheme() {
   if (typeof window === 'undefined') return false
