@@ -1,12 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { ProjectDto } from '@project-manager/schemas'
+import type { ProjectDto, ProjectPriority, ProjectStatus } from '@project-manager/schemas'
 
 import { useAuth } from '../auth/AuthProvider'
 import { listProjects } from '../projects/projects-api'
 
+const statusLabels: Record<ProjectStatus, string> = {
+  planned: 'Planificado',
+  active: 'Activo',
+  paused: 'Pausado',
+  completed: 'Completado',
+  archived: 'Archivado',
+}
+
+const priorityLabels: Record<ProjectPriority, string> = {
+  low: 'Baja',
+  medium: 'Media',
+  high: 'Alta',
+  critical: 'Crítica',
+}
+
+function formatDate(date: string | null) {
+  if (!date) return 'Sin fecha'
+  return new Intl.DateTimeFormat('es-PA', { day: '2-digit', month: 'short' }).format(
+    new Date(`${date}T12:00:00`),
+  )
+}
+
 export function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [projects, setProjects] = useState<ProjectDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,7 +42,11 @@ export function DashboardPage() {
       })
       .catch((loadError) => {
         if (active) {
-          setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los proyectos.')
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'No se pudieron cargar los proyectos.',
+          )
         }
       })
       .finally(() => {
@@ -44,157 +70,173 @@ export function DashboardPage() {
 
   const activeProjects = projects.filter((project) => project.status === 'active')
   const completedProjects = projects.filter((project) => project.status === 'completed')
-  const plannedProjects = projects.filter((project) => project.status === 'planned')
+  const averageProgress =
+    projects.length > 0
+      ? Math.round(projects.reduce((total, project) => total + project.progress, 0) / projects.length)
+      : 0
+  const today = new Date().toISOString().slice(0, 10)
+  const overdueProjects = projects.filter(
+    (project) =>
+      Boolean(project.targetDate) &&
+      project.targetDate! < today &&
+      project.status !== 'completed',
+  )
   const nearestDeadline = [...projects]
     .filter((project) => project.targetDate && project.status !== 'completed')
     .sort((left, right) => (left.targetDate ?? '').localeCompare(right.targetDate ?? ''))[0]
 
   return (
-    <div className="workspace-shell">
-      <aside className="sidebar">
-        <div className="brand-lockup">
-          <span className="brand-mark">PM</span>
-          <div>
-            <strong>Project Manager</strong>
-            <span>Gestión de proyectos</span>
-          </div>
+    <section className="dashboard-page">
+      <header className="page-head">
+        <div>
+          <h2>Buenas tardes, {user?.displayName?.split(' ')[0]}</h2>
+          <p className="page-subtitle">
+            {currentDate} · {projects.length} proyecto{projects.length === 1 ? '' : 's'} en seguimiento
+          </p>
         </div>
+        <Link className="btn" to="/projects/new">
+          + Nuevo proyecto
+        </Link>
+      </header>
 
-        <nav className="side-nav" aria-label="Navegación principal">
-          <Link className="nav-item active" to="/">Resumen</Link>
-          <Link className="nav-item" to="/projects">Proyectos</Link>
-          <span className="nav-item nav-item-disabled">Esta semana</span>
-          <span className="nav-item nav-item-disabled">Hoy</span>
-          <span className="nav-item nav-item-disabled">Historial</span>
-        </nav>
+      {error ? <p className="form-error dashboard-error">{error}</p> : null}
 
-        <div className="sidebar-footer">
-          <div className="profile-chip">
-            <span className="profile-avatar">
-              {user?.displayName?.slice(0, 1).toUpperCase() ?? 'U'}
-            </span>
-            <div>
-              <strong>{user?.displayName}</strong>
-              <span>{user?.email}</span>
+      <section className="stat-grid" aria-label="Resumen general">
+        <article className="stat">
+          <span className="stat-key">Proyectos activos</span>
+          <span className="stat-value">{loading ? '—' : activeProjects.length}</span>
+          <span className="stat-underline" />
+        </article>
+        <article className="stat stat-teal">
+          <span className="stat-key">Completados</span>
+          <span className="stat-value">{loading ? '—' : completedProjects.length}</span>
+          <span className="stat-underline" />
+        </article>
+        <article className="stat stat-amber">
+          <span className="stat-key">Progreso promedio</span>
+          <span className="stat-value">
+            {loading ? '—' : averageProgress}
+            {!loading ? <small>%</small> : null}
+          </span>
+          <span className="stat-underline" />
+        </article>
+        <article className="stat stat-crimson">
+          <span className="stat-key">Vencidos</span>
+          <span className="stat-value">{loading ? '—' : overdueProjects.length}</span>
+          <span className="stat-underline" />
+        </article>
+      </section>
+
+      <div className="dashboard-two-column">
+        <section>
+          <div className="section-head">
+            <h3>Proyectos recientes</h3>
+            <Link className="section-link" to="/projects">
+              Ver todos →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="panel empty-state">Cargando proyectos…</div>
+          ) : projects.length === 0 ? (
+            <div className="panel empty-state">
+              <h3>Aún no tienes proyectos</h3>
+              <p>Crea el primero para comenzar a organizar tu trabajo.</p>
+              <Link className="btn" to="/projects/new">
+                Crear proyecto
+              </Link>
             </div>
-          </div>
-          <button className="text-button" onClick={() => void logout()} type="button">
-            Cerrar sesión
-          </button>
-        </div>
-      </aside>
-
-      <main className="workspace-main">
-        <header className="workspace-header">
-          <div>
-            <span className="page-kicker">Resumen</span>
-            <h1>Hola, {user?.displayName?.split(' ')[0]}.</h1>
-            <p className="header-date">{currentDate}</p>
-          </div>
-
-          <div className="header-actions">
-            <Link className="secondary-button project-action-link" to="/projects">Ver proyectos</Link>
-            <Link className="primary-button project-action-link" to="/projects/new">Nuevo proyecto</Link>
-          </div>
-        </header>
-
-        {error ? <p className="form-error dashboard-error">{error}</p> : null}
-
-        <section className="metrics-grid" aria-label="Resumen general">
-          <article className="metric-card">
-            <span>Proyectos activos</span>
-            <strong>{loading ? '—' : activeProjects.length}</strong>
-            <small>Datos reales de tu cuenta</small>
-          </article>
-          <article className="metric-card">
-            <span>Planificados</span>
-            <strong>{loading ? '—' : plannedProjects.length}</strong>
-            <small>Pendientes de iniciar</small>
-          </article>
-          <article className="metric-card">
-            <span>Completados</span>
-            <strong>{loading ? '—' : completedProjects.length}</strong>
-            <small>Proyectos terminados</small>
-          </article>
-          <article className="metric-card">
-            <span>Total visible</span>
-            <strong>{loading ? '—' : projects.length}</strong>
-            <small>Sin contar archivados</small>
-          </article>
+          ) : (
+            <div className="project-grid sober-project-grid">
+              {projects.slice(0, 4).map((project) => (
+                <Link
+                  className={`sober-card st-${project.status}`}
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                >
+                  <div className="sober-card-top">
+                    <h4>{project.name}</h4>
+                    <span className={`status-badge ${project.status}`}>
+                      {statusLabels[project.status]}
+                    </span>
+                  </div>
+                  <p className="sober-card-desc">{project.description || 'Sin descripción.'}</p>
+                  <div className="sober-progress-row">
+                    <div className="sober-progress-track">
+                      <span
+                        className={`sober-progress-fill priority-${project.priority}`}
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                    <span className="sober-progress-number">{project.progress}%</span>
+                  </div>
+                  <div className="sober-card-meta">
+                    <span>
+                      <span className={`priority-dot priority-${project.priority}`} />
+                      Prioridad {priorityLabels[project.priority].toLowerCase()}
+                    </span>
+                    <span>Obj. {formatDate(project.targetDate)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
-        <section className="dashboard-grid">
-          <div className="dashboard-column dashboard-column-main">
-            <article className="panel">
-              <div className="panel-heading compact">
-                <div>
-                  <span className="panel-label">Proyectos</span>
-                  <h2>Actualizados recientemente</h2>
-                </div>
-                <Link className="link-button" to="/projects">Ver todos</Link>
-              </div>
-
-              {loading ? (
-                <p className="projects-empty">Cargando…</p>
-              ) : projects.length === 0 ? (
-                <div className="projects-empty">
-                  <p>Aún no tienes proyectos.</p>
-                  <Link className="link-button" to="/projects/new">Crear el primero</Link>
-                </div>
-              ) : (
-                <div className="project-list">
-                  {projects.slice(0, 4).map((project) => (
-                    <Link className="project-row project-row-link" key={project.id} to={`/projects/${project.id}`}>
-                      <div className="project-icon" aria-hidden="true">{project.name.slice(0, 1)}</div>
-                      <div className="project-info">
-                        <div className="project-title-row">
-                          <div>
-                            <strong>{project.name}</strong>
-                            <span>{project.status} · {project.priority}</span>
-                          </div>
-                          <span className="project-status">{project.progress}%</span>
-                        </div>
-                        <div className="progress-track small">
-                          <span style={{ width: `${project.progress}%` }} />
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </article>
-          </div>
-
-          <div className="dashboard-column">
-            <article className="panel deadline-panel">
-              <span className="panel-label">Próximo vencimiento</span>
+        <aside className="dashboard-side-stack">
+          <section>
+            <div className="section-head">
+              <h3>Próximo vencimiento</h3>
+            </div>
+            <div className="panel sober-side-panel">
               {nearestDeadline ? (
                 <>
-                  <div className="deadline-date">
-                    <strong>{nearestDeadline.targetDate?.slice(8, 10)}</strong>
-                    <span>{nearestDeadline.targetDate?.slice(5, 7)}</span>
-                  </div>
-                  <div>
-                    <h2>{nearestDeadline.name}</h2>
-                    <p>{nearestDeadline.targetDate}</p>
-                  </div>
+                  <span className="panel-eyebrow">Fecha objetivo</span>
+                  <strong className="deadline-project-name">{nearestDeadline.name}</strong>
+                  <span className="deadline-project-date">
+                    {new Intl.DateTimeFormat('es-PA', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    }).format(new Date(`${nearestDeadline.targetDate}T12:00:00`))}
+                  </span>
+                  <Link className="section-link" to={`/projects/${nearestDeadline.id}`}>
+                    Abrir proyecto →
+                  </Link>
                 </>
               ) : (
-                <div>
-                  <h2>Sin vencimientos</h2>
-                  <p>No hay proyectos pendientes con fecha objetivo.</p>
-                </div>
+                <>
+                  <span className="panel-eyebrow">Agenda</span>
+                  <strong className="deadline-project-name">Sin vencimientos pendientes</strong>
+                  <span className="deadline-project-date">
+                    No hay proyectos abiertos con fecha objetivo.
+                  </span>
+                </>
               )}
-            </article>
+            </div>
+          </section>
 
-            <article className="panel project-placeholder-card">
-              <span className="panel-label">Próximas fases</span>
-              <h2>Tareas y planificación</h2>
-              <p>Se habilitarán cuando completemos los módulos correspondientes.</p>
-            </article>
-          </div>
-        </section>
-      </main>
-    </div>
+          <section>
+            <div className="section-head">
+              <h3>Estado del sistema</h3>
+            </div>
+            <div className="panel phase-panel">
+              <div className="phase-row">
+                <span>Proyectos</span>
+                <span className="status-badge completed">Disponible</span>
+              </div>
+              <div className="phase-row">
+                <span>Hitos</span>
+                <span className="status-badge active">En desarrollo</span>
+              </div>
+              <div className="phase-row muted">
+                <span>Tareas</span>
+                <span>Próxima fase</span>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
   )
 }
