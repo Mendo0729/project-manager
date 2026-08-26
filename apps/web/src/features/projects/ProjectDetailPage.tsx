@@ -119,28 +119,30 @@ export function ProjectDetailPage() {
   }
 
   if (loading) {
-    return <main className="auth-loading">Cargando proyecto…</main>
+    return <div className="content-loading">Cargando proyecto…</div>
   }
 
   if (!project) {
     return (
-      <main className="project-form-shell">
+      <section className="project-form-shell">
         <p className="form-error">{error ?? 'Proyecto no encontrado.'}</p>
-        <Link className="text-button project-back-link" to="/projects">
-          Volver a proyectos
+        <Link className="project-back-link" to="/projects">
+          ← Volver a proyectos
         </Link>
-      </main>
+      </section>
     )
   }
 
   return (
-    <main className="project-detail-shell">
+    <section className="project-detail-shell">
       <div className="project-detail-header">
         <div>
-          <Link className="text-button project-back-link" to="/projects">
+          <Link className="project-back-link" to="/projects">
             ← Proyectos
           </Link>
-          <span className="page-kicker">{statusLabels[project.status]}</span>
+          <span className={`status-badge ${project.status}`}>
+            {statusLabels[project.status]}
+          </span>
           <h1>{project.name}</h1>
           <p>{project.description || 'Sin descripción.'}</p>
         </div>
@@ -176,9 +178,7 @@ export function ProjectDetailPage() {
             </div>
             <div>
               <dt>Modo de progreso</dt>
-              <dd>
-                {project.progressMode === 'manual' ? 'Manual' : 'Automático'}
-              </dd>
+              <dd>{project.progressMode === 'manual' ? 'Manual' : 'Automático'}</dd>
             </div>
           </dl>
         </article>
@@ -190,9 +190,7 @@ export function ProjectDetailPage() {
             <span style={{ width: `${project.progress}%` }} />
           </div>
           {project.progressMode === 'automatic' ? (
-            <p>
-              Calculado automáticamente según los hitos no cancelados y su peso.
-            </p>
+            <p>Calculado automáticamente según los hitos no cancelados y su peso.</p>
           ) : (
             <p>Este proyecto utiliza progreso manual.</p>
           )}
@@ -289,9 +287,7 @@ export function ProjectDetailPage() {
                         <strong>{milestone.name}</strong>
                         <span>
                           Peso {milestone.weight}
-                          {milestone.targetDate
-                            ? ` · Objetivo ${milestone.targetDate}`
-                            : ''}
+                          {milestone.targetDate ? ` · Objetivo ${milestone.targetDate}` : ''}
                         </span>
                       </div>
                       <span className={`milestone-status ${milestone.status}`}>
@@ -299,7 +295,7 @@ export function ProjectDetailPage() {
                       </span>
                     </div>
                     <div className="milestone-progress-row">
-                      <div className="progress-track small">
+                      <div className="progress-track">
                         <span style={{ width: `${milestone.progress}%` }} />
                       </div>
                       <strong>{milestone.progress}%</strong>
@@ -340,6 +336,6 @@ export function ProjectDetailPage() {
           <p>Las tareas se conectarán en la Fase 5.</p>
         </article>
       </section>
-    </main>
+    </section>
   )
 }
