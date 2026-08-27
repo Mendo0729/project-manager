@@ -191,6 +191,20 @@ export async function reorderChecklist(
   input: ReorderChecklistInput,
 ) {
   const task = await requireTask(database, userId, taskId)
+
+  for (const itemId of input.itemIds) {
+    const item = await findChecklistItemById(
+      database,
+      userId,
+      task.id,
+      itemId,
+    )
+
+    if (!item) {
+      throw new ChecklistNotFoundError('Elemento de checklist no encontrado.')
+    }
+  }
+
   const current = await listChecklistItems(database, userId, task.id)
   const currentIds = new Set(current.map((item) => item.id))
   const isExactSet =
