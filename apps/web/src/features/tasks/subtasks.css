@@ -1,0 +1,112 @@
+.subtask-row {
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.subtask-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.subtask-completion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+}
+
+.subtask-completion input {
+  width: 1.15rem;
+  height: 1.15rem;
+  cursor: pointer;
+  accent-color: currentColor;
+}
+
+.subtask-copy {
+  min-width: 0;
+}
+
+.subtask-copy.is-completed strong {
+  opacity: 0.62;
+  text-decoration: line-through;
+}
+
+.subtask-edit-form {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  width: 100%;
+}
+
+.subtask-edit-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 0.65rem 0.75rem;
+}
+
+.subtask-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.subtask-action-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: inherit;
+  min-height: 2.15rem;
+  padding: 0.42rem 0.65rem;
+  cursor: pointer;
+}
+
+.subtask-action-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.subtask-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.subtask-action-button.danger {
+  color: #f3aaaa;
+}
+
+.subtask-order-controls {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.subtask-order-button {
+  min-width: 2.2rem;
+  padding-inline: 0.45rem;
+  font-weight: 700;
+}
+
+.subtask-save-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .subtask-row {
+    align-items: flex-start;
+  }
+
+  .subtask-actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 2.9rem;
+  }
+
+  .subtask-edit-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

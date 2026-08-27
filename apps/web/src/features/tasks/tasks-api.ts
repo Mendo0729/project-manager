@@ -24,6 +24,14 @@ interface SubtaskResponse {
   subtask: TaskDto
 }
 
+interface SubtasksResponse {
+  subtasks: TaskDto[]
+}
+
+interface DeleteSubtaskResponse {
+  deletedSubtaskId: string
+}
+
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, {
     credentials: 'include',
@@ -132,4 +140,24 @@ export async function updateSubtask(
     },
   )
   return response.subtask
+}
+
+export async function deleteSubtask(taskId: string, subtaskId: string) {
+  const response = await apiRequest<DeleteSubtaskResponse>(
+    `/tasks/${taskId}/subtasks/${subtaskId}`,
+    { method: 'DELETE' },
+  )
+  return response.deletedSubtaskId
+}
+
+export async function reorderSubtasks(taskId: string, subtaskIds: string[]) {
+  const response = await apiRequest<SubtasksResponse>(
+    `/tasks/${taskId}/subtasks/order`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subtaskIds }),
+    },
+  )
+  return response.subtasks
 }

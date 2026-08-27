@@ -5,6 +5,7 @@ import Fastify from 'fastify'
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
 import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.js'
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
+import { registerSubtaskManagementRoutes } from './modules/tasks/subtask.routes.js'
 import {
   registerProjectTaskRoutes,
   registerTaskRoutes,
@@ -33,6 +34,7 @@ await app.register(
 await app.register(
   async (taskApp) => {
     await registerTaskRoutes(taskApp, database)
+    await registerSubtaskManagementRoutes(taskApp, database)
   },
   { prefix: '/tasks' },
 )

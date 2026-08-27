@@ -1,13 +1,25 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+} from 'react'
 import { Link, useParams } from 'react-router-dom'
-import type { TaskDetailDto, TaskStatus } from '@project-manager/schemas'
+import type {
+  TaskDetailDto,
+  TaskDto,
+  TaskStatus,
+} from '@project-manager/schemas'
 
 import {
   createSubtask,
+  deleteSubtask,
   getTask,
+  reorderSubtasks,
   updateSubtask,
   updateTask,
 } from './tasks-api'
+import './subtasks.css'
 
 const statusLabels: Record<TaskStatus, string> = {
   backlog: 'Backlog',
@@ -22,8 +34,12 @@ export function TaskDetailPage() {
   const { taskId } = useParams()
   const [task, setTask] = useState<TaskDetailDto | null>(null)
   const [subtaskTitle, setSubtaskTitle] = useState('')
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null)
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [reordering, setReordering] = useState(false)
+  const [deletingSubtaskId, setDeletingSubtaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
@@ -122,6 +138,105 @@ export function TaskDetailPage() {
       )
     } finally {
       setUpdating(false)
+    }
+  }
+
+  function beginSubtaskEdit(subtask: TaskDto) {
+    setEditingSubtaskId(subtask.id)
+    setEditingSubtaskTitle(subtask.title)
+    setError(null)
+  }
+
+  function cancelSubtaskEdit() {
+    setEditingSubtaskId(null)
+    setEditingSubtaskTitle('')
+  }
+
+  async function handleSaveSubtaskTitle(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!taskId || !editingSubtaskId || !editingSubtaskTitle.trim()) return
+
+    setUpdating(true)
+    setError(null)
+
+    try {
+      await updateSubtask(taskId, editingSubtaskId, {
+        title: editingSubtaskTitle.trim(),
+      })
+      cancelSubtaskEdit()
+      await refresh()
+    } catch (updateError) {
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : 'No se pudo editar la subtarea.',
+      )
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  async function handleDeleteSubtask(subtask: TaskDto) {
+    if (!taskId) return
+
+    const confirmed = window.confirm(
+      `¿Eliminar la subtarea “${subtask.title}”? Esta acción no se puede deshacer.`,
+    )
+    if (!confirmed) return
+
+    setDeletingSubtaskId(subtask.id)
+    setError(null)
+
+    try {
+      await deleteSubtask(taskId, subtask.id)
+      if (editingSubtaskId === subtask.id) cancelSubtaskEdit()
+      await refresh()
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'No se pudo eliminar la subtarea.',
+      )
+    } finally {
+      setDeletingSubtaskId(null)
+    }
+  }
+
+  async function moveSubtask(index: number, offset: -1 | 1) {
+    if (!taskId || !task || reordering) return
+
+    const targetIndex = index + offset
+    if (targetIndex < 0 || targetIndex >= task.subtasks.length) return
+
+    const previous = task.subtasks
+    const next = [...previous]
+    const [moved] = next.splice(index, 1)
+    if (!moved) return
+    next.splice(targetIndex, 0, moved)
+
+    setTask({ ...task, subtasks: next })
+    setReordering(true)
+    setError(null)
+
+    try {
+      const reordered = await reorderSubtasks(
+        taskId,
+        next.map((subtask) => subtask.id),
+      )
+      setTask((current) =>
+        current ? { ...current, subtasks: reordered } : current,
+      )
+    } catch (reorderError) {
+      setTask((current) =>
+        current ? { ...current, subtasks: previous } : current,
+      )
+      setError(
+        reorderError instanceof Error
+          ? reorderError.message
+          : 'No se pudo guardar el orden de las subtareas.',
+      )
+    } finally {
+      setReordering(false)
     }
   }
 
@@ -297,7 +412,7 @@ export function TaskDetailPage() {
             <span className="panel-label">Subtareas</span>
             <h2>Desglose del trabajo</h2>
             <p className="task-section-description">
-              Divide esta tarea en pasos pequeños y controla el estado de cada uno.
+              Crea, completa, edita, elimina y ordena los pasos de esta tarea.
             </p>
           </div>
           <span className="task-count">{task.subtasks.length}</span>
@@ -332,42 +447,134 @@ export function TaskDetailPage() {
                 className={`subtask-row status-${subtask.status}`}
                 key={subtask.id}
               >
-                <div className="subtask-main">
-                  <span className="subtask-index">{index + 1}</span>
-                  <div className="subtask-copy">
-                    <strong>{subtask.title}</strong>
-                    <div className="subtask-meta">
-                      <span className={`task-status-badge ${subtask.status}`}>
-                        {statusLabels[subtask.status]}
-                      </span>
-                      <span>{subtask.progress}% completado</span>
-                      {subtask.dueDate ? <span>Vence {subtask.dueDate}</span> : null}
-                    </div>
-                  </div>
-                </div>
-
-                <label className="subtask-status-control">
-                  <span className="sr-only">Estado de {subtask.title}</span>
-                  <select
-                    aria-label={`Estado de ${subtask.title}`}
-                    className={`subtask-status-select ${subtask.status}`}
-                    disabled={updating}
+                <label className="subtask-completion">
+                  <span className="sr-only">
+                    {subtask.status === 'completed'
+                      ? `Reabrir ${subtask.title}`
+                      : `Completar ${subtask.title}`}
+                  </span>
+                  <input
+                    checked={subtask.status === 'completed'}
+                    disabled={updating || deletingSubtaskId === subtask.id}
                     onChange={(event) =>
                       void changeSubtaskStatus(
                         subtask.id,
-                        event.target.value as TaskStatus,
+                        event.target.checked ? 'completed' : 'pending',
                       )
                     }
-                    value={subtask.status}
-                  >
-                    <option value="backlog">Backlog</option>
-                    <option value="pending">Pendiente</option>
-                    <option value="in_progress">En progreso</option>
-                    <option value="blocked">Bloqueada</option>
-                    <option value="completed">Completada</option>
-                    <option value="canceled">Cancelada</option>
-                  </select>
+                    type="checkbox"
+                  />
                 </label>
+
+                <div className="subtask-main">
+                  <span className="subtask-index">{index + 1}</span>
+                  <div
+                    className={`subtask-copy ${
+                      subtask.status === 'completed' ? 'is-completed' : ''
+                    }`}
+                  >
+                    {editingSubtaskId === subtask.id ? (
+                      <form
+                        className="subtask-edit-form"
+                        onSubmit={handleSaveSubtaskTitle}
+                      >
+                        <input
+                          autoFocus
+                          className="subtask-edit-input"
+                          maxLength={240}
+                          onChange={(event) =>
+                            setEditingSubtaskTitle(event.target.value)
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === 'Escape') cancelSubtaskEdit()
+                          }}
+                          value={editingSubtaskTitle}
+                        />
+                        <button
+                          className="subtask-action-button subtask-save-button"
+                          disabled={updating || !editingSubtaskTitle.trim()}
+                          type="submit"
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          className="subtask-action-button"
+                          disabled={updating}
+                          onClick={cancelSubtaskEdit}
+                          type="button"
+                        >
+                          Cancelar
+                        </button>
+                      </form>
+                    ) : (
+                      <>
+                        <strong>{subtask.title}</strong>
+                        <div className="subtask-meta">
+                          <span className={`task-status-badge ${subtask.status}`}>
+                            {statusLabels[subtask.status]}
+                          </span>
+                          <span>{subtask.progress}% completado</span>
+                          {subtask.dueDate ? (
+                            <span>Vence {subtask.dueDate}</span>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="subtask-actions">
+                  <div className="subtask-order-controls">
+                    <button
+                      aria-label={`Mover ${subtask.title} hacia arriba`}
+                      className="subtask-action-button subtask-order-button"
+                      disabled={reordering || index === 0}
+                      onClick={() => void moveSubtask(index, -1)}
+                      title="Mover arriba"
+                      type="button"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      aria-label={`Mover ${subtask.title} hacia abajo`}
+                      className="subtask-action-button subtask-order-button"
+                      disabled={
+                        reordering || index === task.subtasks.length - 1
+                      }
+                      onClick={() => void moveSubtask(index, 1)}
+                      title="Mover abajo"
+                      type="button"
+                    >
+                      ↓
+                    </button>
+                  </div>
+
+                  {editingSubtaskId !== subtask.id ? (
+                    <button
+                      className="subtask-action-button"
+                      disabled={updating || reordering}
+                      onClick={() => beginSubtaskEdit(subtask)}
+                      type="button"
+                    >
+                      Editar
+                    </button>
+                  ) : null}
+
+                  <button
+                    className="subtask-action-button danger"
+                    disabled={
+                      updating ||
+                      reordering ||
+                      deletingSubtaskId === subtask.id
+                    }
+                    onClick={() => void handleDeleteSubtask(subtask)}
+                    type="button"
+                  >
+                    {deletingSubtaskId === subtask.id
+                      ? 'Eliminando…'
+                      : 'Eliminar'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -376,7 +583,11 @@ export function TaskDetailPage() {
 
       <section className="panel task-checklist-preview">
         <span className="panel-label">Checklist</span>
-        <h2>{task.checklist.length > 0 ? `${task.checklist.length} elementos` : 'Siguiente paso'}</h2>
+        <h2>
+          {task.checklist.length > 0
+            ? `${task.checklist.length} elementos`
+            : 'Siguiente paso'}
+        </h2>
         <p>
           {task.checklist.length > 0
             ? 'Los elementos existentes ya participan en el cálculo del progreso.'

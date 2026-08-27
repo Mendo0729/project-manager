@@ -108,6 +108,17 @@ export const subtaskParamsSchema = z.object({
   subtaskId: z.string().uuid('Identificador de subtarea inválido.'),
 })
 
+export const reorderSubtasksSchema = z
+  .object({
+    subtaskIds: z
+      .array(z.string().uuid('Identificador de subtarea inválido.'))
+      .min(1, 'Debes enviar al menos una subtarea.'),
+  })
+  .refine(({ subtaskIds }) => new Set(subtaskIds).size === subtaskIds.length, {
+    path: ['subtaskIds'],
+    message: 'La lista de subtareas no puede contener identificadores duplicados.',
+  })
+
 export const reorderTasksSchema = z
   .object({
     taskIds: z
@@ -155,6 +166,7 @@ export type UpdateTaskInput = z.infer<typeof updateTaskSchema>
 export type CreateSubtaskInput = z.infer<typeof createSubtaskSchema>
 export type UpdateSubtaskInput = z.infer<typeof updateSubtaskSchema>
 export type TaskFilters = z.infer<typeof taskFiltersSchema>
+export type ReorderSubtasksInput = z.infer<typeof reorderSubtasksSchema>
 export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>
 export type CreateChecklistItemInput = z.infer<typeof createChecklistItemSchema>
 export type UpdateChecklistItemInput = z.infer<typeof updateChecklistItemSchema>
