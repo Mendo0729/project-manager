@@ -80,7 +80,7 @@ export function TasksPage() {
 
   return (
     <section className="tasks-page">
-      <div className="page-head">
+      <div className="page-head task-page-head">
         <div>
           <span className="page-kicker">Trabajo</span>
           <h2>Tareas</h2>
@@ -88,7 +88,7 @@ export function TasksPage() {
             Tareas personales y trabajo vinculado a proyectos e hitos.
           </p>
         </div>
-        <Link className="primary-button" to="/tasks/new">
+        <Link className="primary-button task-new-button" to="/tasks/new">
           + Nueva tarea
         </Link>
       </div>
@@ -113,12 +113,18 @@ export function TasksPage() {
       </section>
 
       <div className="task-toolbar">
-        <div className="project-filter-tabs" role="tablist" aria-label="Filtrar tareas">
+        <div
+          className="project-filter-tabs task-filter-tabs"
+          role="tablist"
+          aria-label="Filtrar tareas"
+        >
           {filterOptions.map((option) => (
             <button
+              aria-selected={status === option.value}
               className={`chip${status === option.value ? ' active' : ''}`}
               key={option.value}
               onClick={() => setStatus(option.value)}
+              role="tab"
               type="button"
             >
               {option.label}
@@ -126,14 +132,17 @@ export function TasksPage() {
           ))}
         </div>
 
-        <input
-          aria-label="Buscar tareas"
-          className="sober-search"
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por título o descripción"
-          type="search"
-          value={search}
-        />
+        <label className="task-search-wrap">
+          <span className="sr-only">Buscar tareas</span>
+          <input
+            aria-label="Buscar tareas"
+            className="task-search"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por título o descripción"
+            type="search"
+            value={search}
+          />
+        </label>
       </div>
 
       {error ? <p className="form-error">{error}</p> : null}
@@ -149,7 +158,11 @@ export function TasksPage() {
       ) : (
         <div className="task-list">
           {tasks.map((task) => (
-            <Link className={`task-row status-${task.status}`} key={task.id} to={`/tasks/${task.id}`}>
+            <Link
+              className={`task-row status-${task.status}`}
+              key={task.id}
+              to={`/tasks/${task.id}`}
+            >
               <div className="task-row-main">
                 <div className="task-title-line">
                   <strong>{task.title}</strong>
