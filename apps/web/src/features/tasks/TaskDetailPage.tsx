@@ -142,7 +142,7 @@ export function TaskDetailPage() {
 
   return (
     <section className="project-detail-shell task-detail-shell">
-      <div className="project-detail-header">
+      <div className="project-detail-header task-detail-header">
         <div>
           <Link className="project-back-link" to="/tasks">
             ← Tareas
@@ -214,10 +214,17 @@ export function TaskDetailPage() {
           ) : null}
         </article>
 
-        <article className="panel project-progress-card">
+        <article className="panel project-progress-card task-progress-card">
           <span className="panel-label">Progreso</span>
           <strong>{task.progress}%</strong>
-          <div className="progress-track">
+          <div
+            aria-label={`Progreso ${task.progress}%`}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={task.progress}
+            className="progress-track task-detail-progress-track"
+            role="progressbar"
+          >
             <span style={{ width: `${task.progress}%` }} />
           </div>
           <p>
@@ -289,15 +296,19 @@ export function TaskDetailPage() {
           <div>
             <span className="panel-label">Subtareas</span>
             <h2>Desglose del trabajo</h2>
+            <p className="task-section-description">
+              Divide esta tarea en pasos pequeños y controla el estado de cada uno.
+            </p>
           </div>
           <span className="task-count">{task.subtasks.length}</span>
         </div>
 
         <form className="task-inline-create" onSubmit={handleCreateSubtask}>
           <input
+            className="task-inline-input"
             maxLength={240}
             onChange={(event) => setSubtaskTitle(event.target.value)}
-            placeholder="Nueva subtarea"
+            placeholder="Escribe una nueva subtarea…"
             value={subtaskTitle}
           />
           <button
@@ -310,34 +321,54 @@ export function TaskDetailPage() {
         </form>
 
         {task.subtasks.length === 0 ? (
-          <p className="task-section-empty">Aún no hay subtareas.</p>
+          <div className="task-section-empty task-subtask-empty">
+            <strong>No hay subtareas todavía.</strong>
+            <span>Agrega la primera usando el campo de arriba.</span>
+          </div>
         ) : (
           <div className="subtask-list">
-            {task.subtasks.map((subtask) => (
-              <div className="subtask-row" key={subtask.id}>
-                <div>
-                  <strong>{subtask.title}</strong>
-                  <span>{statusLabels[subtask.status]} · {subtask.progress}%</span>
+            {task.subtasks.map((subtask, index) => (
+              <article
+                className={`subtask-row status-${subtask.status}`}
+                key={subtask.id}
+              >
+                <div className="subtask-main">
+                  <span className="subtask-index">{index + 1}</span>
+                  <div className="subtask-copy">
+                    <strong>{subtask.title}</strong>
+                    <div className="subtask-meta">
+                      <span className={`task-status-badge ${subtask.status}`}>
+                        {statusLabels[subtask.status]}
+                      </span>
+                      <span>{subtask.progress}% completado</span>
+                      {subtask.dueDate ? <span>Vence {subtask.dueDate}</span> : null}
+                    </div>
+                  </div>
                 </div>
-                <select
-                  aria-label={`Estado de ${subtask.title}`}
-                  disabled={updating}
-                  onChange={(event) =>
-                    void changeSubtaskStatus(
-                      subtask.id,
-                      event.target.value as TaskStatus,
-                    )
-                  }
-                  value={subtask.status}
-                >
-                  <option value="backlog">Backlog</option>
-                  <option value="pending">Pendiente</option>
-                  <option value="in_progress">En progreso</option>
-                  <option value="blocked">Bloqueada</option>
-                  <option value="completed">Completada</option>
-                  <option value="canceled">Cancelada</option>
-                </select>
-              </div>
+
+                <label className="subtask-status-control">
+                  <span className="sr-only">Estado de {subtask.title}</span>
+                  <select
+                    aria-label={`Estado de ${subtask.title}`}
+                    className={`subtask-status-select ${subtask.status}`}
+                    disabled={updating}
+                    onChange={(event) =>
+                      void changeSubtaskStatus(
+                        subtask.id,
+                        event.target.value as TaskStatus,
+                      )
+                    }
+                    value={subtask.status}
+                  >
+                    <option value="backlog">Backlog</option>
+                    <option value="pending">Pendiente</option>
+                    <option value="in_progress">En progreso</option>
+                    <option value="blocked">Bloqueada</option>
+                    <option value="completed">Completada</option>
+                    <option value="canceled">Cancelada</option>
+                  </select>
+                </label>
+              </article>
             ))}
           </div>
         )}
