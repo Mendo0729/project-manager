@@ -9,6 +9,10 @@ import { registerChecklistRoutes } from './modules/tasks/checklist.routes.js'
 import { registerSubtaskManagementRoutes } from './modules/tasks/subtask.routes.js'
 import { registerTaskOrderRoutes } from './modules/tasks/task-order.routes.js'
 import {
+  registerTagRoutes,
+  registerTaskTagRoutes,
+} from './modules/tasks/tag.routes.js'
+import {
   registerProjectTaskRoutes,
   registerTaskRoutes,
 } from './modules/tasks/task.routes.js'
@@ -34,11 +38,18 @@ await app.register(
   { prefix: '/projects' },
 )
 await app.register(
+  async (tagApp) => {
+    await registerTagRoutes(tagApp, database)
+  },
+  { prefix: '/tags' },
+)
+await app.register(
   async (taskApp) => {
     await registerTaskRoutes(taskApp, database)
     await registerSubtaskManagementRoutes(taskApp, database)
     await registerChecklistRoutes(taskApp, database)
     await registerTaskOrderRoutes(taskApp, database)
+    await registerTaskTagRoutes(taskApp, database)
   },
   { prefix: '/tasks' },
 )
