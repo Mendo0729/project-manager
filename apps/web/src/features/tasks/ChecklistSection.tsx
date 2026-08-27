@@ -11,6 +11,7 @@ import {
   createChecklistItem,
   deleteChecklistItem,
   listChecklist,
+  reorderChecklist,
   updateChecklistItem,
 } from './tasks-api'
 import './checklists.css'
@@ -28,6 +29,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [busyItemId, setBusyItemId] = useState<string | null>(null)
+  const [reordering, setReordering] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!taskId || !title.trim() || busyItemId) return
+    if (!taskId || !title.trim() || busyItemId || reordering) return
 
     setCreating(true)
     setError(null)
@@ -105,7 +107,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!taskId || !editingId || !editingTitle.trim()) return
+    if (!taskId || !editingId || !editingTitle.trim() || reordering) return
 
     setBusyItemId(editingId)
     setError(null)
@@ -131,7 +133,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
   }
 
   async function handleToggle(item: ChecklistItemDto, isCompleted: boolean) {
-    if (!taskId || busyItemId) return
+    if (!taskId || busyItemId || reordering) return
 
     const previous = items
     setItems((current) =>
@@ -167,7 +169,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
   }
 
   async function handleDelete(item: ChecklistItemDto) {
-    if (!taskId || busyItemId) return
+    if (!taskId || busyItemId || reordering) return
 
     const confirmed = window.confirm(
       `¿Eliminar “${item.title}” del checklist? Esta acción no se puede deshacer.`,
@@ -195,6 +197,40 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
     }
   }
 
+  async function moveItem(index: number, offset: -1 | 1) {
+    if (!taskId || busyItemId || reordering) return
+
+    const targetIndex = index + offset
+    if (targetIndex < 0 || targetIndex >= items.length) return
+
+    const previous = items
+    const next = [...previous]
+    const [moved] = next.splice(index, 1)
+    if (!moved) return
+    next.splice(targetIndex, 0, moved)
+
+    setItems(next)
+    setReordering(true)
+    setError(null)
+
+    try {
+      const reordered = await reorderChecklist(
+        taskId,
+        next.map((item) => item.id),
+      )
+      setItems(reordered)
+    } catch (reorderError) {
+      setItems(previous)
+      setError(
+        reorderError instanceof Error
+          ? reorderError.message
+          : 'No se pudo guardar el orden del checklist.',
+      )
+    } finally {
+      setReordering(false)
+    }
+  }
+
   return (
     <section className="project-detail-shell task-checklist-shell">
       <section className="panel task-checklist-section">
@@ -203,7 +239,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
             <span className="panel-label">Checklist</span>
             <h2>Pasos verificables</h2>
             <p className="task-section-description">
-              Marca avances puntuales sin convertirlos en subtareas completas.
+              Marca, edita y ordena avances puntuales sin convertirlos en subtareas.
             </p>
           </div>
           <div className="checklist-summary">
@@ -235,7 +271,9 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
           />
           <button
             className="primary-button"
-            disabled={creating || busyItemId !== null || !title.trim()}
+            disabled={
+              creating || busyItemId !== null || reordering || !title.trim()
+            }
             type="submit"
           >
             {creating ? 'Agregando…' : 'Agregar'}
@@ -253,7 +291,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
           </div>
         ) : (
           <div className="checklist-list">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <article
                 className={`checklist-row ${item.isCompleted ? 'is-completed' : ''}`}
                 key={item.id}
@@ -266,7 +304,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
                   </span>
                   <input
                     checked={item.isCompleted}
-                    disabled={busyItemId !== null}
+                    disabled={busyItemId !== null || reordering}
                     onChange={(event) =>
                       void handleToggle(item, event.target.checked)
                     }
@@ -290,14 +328,18 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
                       <div className="checklist-edit-actions">
                         <button
                           className="checklist-action-button"
-                          disabled={busyItemId === item.id || !editingTitle.trim()}
+                          disabled={
+                            busyItemId === item.id ||
+                            reordering ||
+                            !editingTitle.trim()
+                          }
                           type="submit"
                         >
                           Guardar
                         </button>
                         <button
                           className="checklist-action-button"
-                          disabled={busyItemId === item.id}
+                          disabled={busyItemId === item.id || reordering}
                           onClick={cancelEdit}
                           type="button"
                         >
@@ -311,10 +353,39 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
                 </div>
 
                 <div className="checklist-actions">
+                  <div className="checklist-order-controls">
+                    <button
+                      aria-label={`Mover ${item.title} hacia arriba`}
+                      className="checklist-action-button checklist-order-button"
+                      disabled={
+                        busyItemId !== null || reordering || index === 0
+                      }
+                      onClick={() => void moveItem(index, -1)}
+                      title="Mover arriba"
+                      type="button"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      aria-label={`Mover ${item.title} hacia abajo`}
+                      className="checklist-action-button checklist-order-button"
+                      disabled={
+                        busyItemId !== null ||
+                        reordering ||
+                        index === items.length - 1
+                      }
+                      onClick={() => void moveItem(index, 1)}
+                      title="Mover abajo"
+                      type="button"
+                    >
+                      ↓
+                    </button>
+                  </div>
+
                   {editingId !== item.id ? (
                     <button
                       className="checklist-action-button"
-                      disabled={busyItemId !== null}
+                      disabled={busyItemId !== null || reordering}
                       onClick={() => beginEdit(item)}
                       type="button"
                     >
@@ -323,7 +394,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
                   ) : null}
                   <button
                     className="checklist-action-button danger"
-                    disabled={busyItemId !== null}
+                    disabled={busyItemId !== null || reordering}
                     onClick={() => void handleDelete(item)}
                     type="button"
                   >
