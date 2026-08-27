@@ -1,9 +1,12 @@
 import type {
+  ChecklistItemDto,
+  CreateChecklistItemInput,
   CreateSubtaskInput,
   CreateTaskInput,
   TaskDetailDto,
   TaskDto,
   TaskFilters,
+  UpdateChecklistItemInput,
   UpdateSubtaskInput,
   UpdateTaskInput,
 } from '@project-manager/schemas'
@@ -30,6 +33,18 @@ interface SubtasksResponse {
 
 interface DeleteSubtaskResponse {
   deletedSubtaskId: string
+}
+
+interface ChecklistResponse {
+  checklist: ChecklistItemDto[]
+}
+
+interface ChecklistItemResponse {
+  item: ChecklistItemDto
+}
+
+interface DeleteChecklistItemResponse {
+  deletedChecklistItemId: string
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
@@ -160,4 +175,50 @@ export async function reorderSubtasks(taskId: string, subtaskIds: string[]) {
     },
   )
   return response.subtasks
+}
+
+export async function listChecklist(taskId: string) {
+  const response = await apiRequest<ChecklistResponse>(
+    `/tasks/${taskId}/checklist`,
+  )
+  return response.checklist
+}
+
+export async function createChecklistItem(
+  taskId: string,
+  input: CreateChecklistItemInput,
+) {
+  const response = await apiRequest<ChecklistItemResponse>(
+    `/tasks/${taskId}/checklist`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+  return response.item
+}
+
+export async function updateChecklistItem(
+  taskId: string,
+  itemId: string,
+  input: UpdateChecklistItemInput,
+) {
+  const response = await apiRequest<ChecklistItemResponse>(
+    `/tasks/${taskId}/checklist/${itemId}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+  return response.item
+}
+
+export async function deleteChecklistItem(taskId: string, itemId: string) {
+  const response = await apiRequest<DeleteChecklistItemResponse>(
+    `/tasks/${taskId}/checklist/${itemId}`,
+    { method: 'DELETE' },
+  )
+  return response.deletedChecklistItemId
 }
