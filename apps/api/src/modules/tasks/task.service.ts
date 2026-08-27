@@ -130,11 +130,7 @@ function taskStatusAction(
     return 'task.canceled'
   }
 
-  if (
-    (previous === 'completed' || previous === 'canceled') &&
-    next !== 'completed' &&
-    next !== 'canceled'
-  ) {
+  if (previous === 'completed' || previous === 'canceled') {
     return 'task.reopened'
   }
 
