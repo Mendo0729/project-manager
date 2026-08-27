@@ -4,6 +4,7 @@ import {
   desc,
   eq,
   ilike,
+  inArray,
   isNotNull,
   isNull,
   max,
@@ -48,6 +49,13 @@ function taskScopeConditions(userId: string, scope: TaskScope): SQL[] {
       ? isNull(tasks.parentTaskId)
       : eq(tasks.parentTaskId, scope.parentTaskId),
   ]
+}
+
+function ownedTaskIds(database: DatabaseConnection, userId: string) {
+  return database.db
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(eq(tasks.userId, userId))
 }
 
 export async function listTasks(
@@ -379,6 +387,7 @@ export async function insertChecklistItem(
 
 export async function updateChecklistItemById(
   database: DatabaseConnection,
+  userId: string,
   taskId: string,
   itemId: string,
   values: ChecklistUpdateRow,
@@ -390,6 +399,7 @@ export async function updateChecklistItemById(
       and(
         eq(taskChecklists.id, itemId),
         eq(taskChecklists.taskId, taskId),
+        inArray(taskChecklists.taskId, ownedTaskIds(database, userId)),
       ),
     )
     .returning()
@@ -399,6 +409,7 @@ export async function updateChecklistItemById(
 
 export async function deleteChecklistItemById(
   database: DatabaseConnection,
+  userId: string,
   taskId: string,
   itemId: string,
 ) {
@@ -408,6 +419,7 @@ export async function deleteChecklistItemById(
       and(
         eq(taskChecklists.id, itemId),
         eq(taskChecklists.taskId, taskId),
+        inArray(taskChecklists.taskId, ownedTaskIds(database, userId)),
       ),
     )
     .returning()
@@ -417,9 +429,12 @@ export async function deleteChecklistItemById(
 
 export async function replaceChecklistOrder(
   database: DatabaseConnection,
+  userId: string,
   taskId: string,
   itemIds: string[],
 ) {
+  const userTaskIds = ownedTaskIds(database, userId)
+
   await database.db.transaction(async (transaction) => {
     for (const [position, itemId] of itemIds.entries()) {
       await transaction
@@ -429,6 +444,7 @@ export async function replaceChecklistOrder(
           and(
             eq(taskChecklists.id, itemId),
             eq(taskChecklists.taskId, taskId),
+            inArray(taskChecklists.taskId, userTaskIds),
           ),
         )
     }
