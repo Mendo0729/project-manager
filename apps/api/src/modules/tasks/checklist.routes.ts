@@ -4,6 +4,7 @@ import type { DatabaseConnection } from '@project-manager/database'
 import {
   checklistItemParamsSchema,
   createChecklistItemSchema,
+  reorderChecklistSchema,
   taskParamsSchema,
   updateChecklistItemSchema,
 } from '@project-manager/schemas'
@@ -11,9 +12,11 @@ import {
 import { createRequireAuth } from '../../common/http/require-auth.js'
 import {
   ChecklistNotFoundError,
+  ChecklistValidationError,
   createChecklistItem,
   deleteChecklistItem,
   getChecklist,
+  reorderChecklist,
   updateChecklistItem,
 } from './checklist.service.js'
 
@@ -21,6 +24,13 @@ function sendKnownError(error: unknown, reply: FastifyReply) {
   if (error instanceof ChecklistNotFoundError) {
     return reply.code(404).send({
       error: 'checklist_not_found',
+      message: error.message,
+    })
+  }
+
+  if (error instanceof ChecklistValidationError) {
+    return reply.code(400).send({
+      error: 'invalid_checklist_order',
       message: error.message,
     })
   }
@@ -100,6 +110,43 @@ export async function registerChecklistRoutes(
           parsedBody.data,
         )
         return reply.code(201).send({ item })
+      } catch (error) {
+        return sendKnownError(error, reply)
+      }
+    },
+  )
+
+  app.put(
+    '/:taskId/checklist/order',
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const parsedParams = taskParamsSchema.safeParse(request.params)
+      const parsedBody = reorderChecklistSchema.safeParse(request.body)
+
+      if (!parsedParams.success) {
+        return sendValidationError(
+          reply,
+          'invalid_task_id',
+          parsedParams.error.issues[0]?.message ?? 'Tarea inválida.',
+        )
+      }
+
+      if (!parsedBody.success) {
+        return sendValidationError(
+          reply,
+          'invalid_checklist_order',
+          parsedBody.error.issues[0]?.message ?? 'Orden de checklist inválido.',
+        )
+      }
+
+      try {
+        const checklist = await reorderChecklist(
+          database,
+          request.authUser!.id,
+          parsedParams.data.taskId,
+          parsedBody.data,
+        )
+        return { checklist }
       } catch (error) {
         return sendKnownError(error, reply)
       }
