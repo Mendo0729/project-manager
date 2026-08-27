@@ -7,6 +7,7 @@ import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.j
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
 import { registerChecklistRoutes } from './modules/tasks/checklist.routes.js'
 import { registerSubtaskManagementRoutes } from './modules/tasks/subtask.routes.js'
+import { registerTaskOrderRoutes } from './modules/tasks/task-order.routes.js'
 import {
   registerProjectTaskRoutes,
   registerTaskRoutes,
@@ -37,6 +38,7 @@ await app.register(
     await registerTaskRoutes(taskApp, database)
     await registerSubtaskManagementRoutes(taskApp, database)
     await registerChecklistRoutes(taskApp, database)
+    await registerTaskOrderRoutes(taskApp, database)
   },
   { prefix: '/tasks' },
 )
