@@ -1,6 +1,7 @@
 import type { DatabaseConnection } from '@project-manager/database'
 import type {
   CreateChecklistItemInput,
+  ReorderChecklistInput,
   UpdateChecklistItemInput,
 } from '@project-manager/schemas'
 
@@ -13,10 +14,12 @@ import {
   getNextChecklistPosition,
   insertChecklistItem,
   listChecklistItems,
+  replaceChecklistOrder,
   updateChecklistItemById,
 } from './task.repository.js'
 
 export class ChecklistNotFoundError extends Error {}
+export class ChecklistValidationError extends Error {}
 
 async function requireTask(
   database: DatabaseConnection,
@@ -179,4 +182,40 @@ export async function deleteChecklistItem(
   })
 
   return deleted.id
+}
+
+export async function reorderChecklist(
+  database: DatabaseConnection,
+  userId: string,
+  taskId: string,
+  input: ReorderChecklistInput,
+) {
+  const task = await requireTask(database, userId, taskId)
+  const current = await listChecklistItems(database, userId, task.id)
+  const currentIds = new Set(current.map((item) => item.id))
+  const isExactSet =
+    current.length === input.itemIds.length &&
+    input.itemIds.every((itemId) => currentIds.has(itemId))
+
+  if (!isExactSet) {
+    throw new ChecklistValidationError(
+      'El nuevo orden debe incluir exactamente todos los elementos del checklist.',
+    )
+  }
+
+  await replaceChecklistOrder(database, userId, task.id, input.itemIds)
+
+  await addTaskActivity(database, {
+    userId,
+    taskId: task.id,
+    projectId: task.projectId,
+    milestoneId: task.milestoneId,
+    action: 'checklist.reordered',
+    metadata: {
+      itemIds: input.itemIds,
+    },
+  })
+
+  const reordered = await listChecklistItems(database, userId, task.id)
+  return reordered.map(mapChecklistItem)
 }
