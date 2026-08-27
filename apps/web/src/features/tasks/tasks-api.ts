@@ -2,7 +2,9 @@ import type {
   ChecklistItemDto,
   CreateChecklistItemInput,
   CreateSubtaskInput,
+  CreateTagInput,
   CreateTaskInput,
+  TagDto,
   TaskDetailDto,
   TaskDto,
   TaskFilters,
@@ -49,6 +51,18 @@ interface ChecklistItemResponse {
 
 interface DeleteChecklistItemResponse {
   deletedChecklistItemId: string
+}
+
+interface TagsResponse {
+  tags: TagDto[]
+}
+
+interface TagResponse {
+  tag: TagDto
+}
+
+interface RemoveTagResponse {
+  removedTagId: string
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
@@ -246,4 +260,39 @@ export async function reorderChecklist(taskId: string, itemIds: string[]) {
     },
   )
   return response.checklist
+}
+
+export async function listTags() {
+  const response = await apiRequest<TagsResponse>('/tags')
+  return response.tags
+}
+
+export async function createTag(input: CreateTagInput) {
+  const response = await apiRequest<TagResponse>('/tags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return response.tag
+}
+
+export async function listTaskTags(taskId: string) {
+  const response = await apiRequest<TagsResponse>(`/tasks/${taskId}/tags`)
+  return response.tags
+}
+
+export async function assignTaskTag(taskId: string, tagId: string) {
+  const response = await apiRequest<TagResponse>(
+    `/tasks/${taskId}/tags/${tagId}`,
+    { method: 'POST' },
+  )
+  return response.tag
+}
+
+export async function removeTaskTag(taskId: string, tagId: string) {
+  const response = await apiRequest<RemoveTagResponse>(
+    `/tasks/${taskId}/tags/${tagId}`,
+    { method: 'DELETE' },
+  )
+  return response.removedTagId
 }
