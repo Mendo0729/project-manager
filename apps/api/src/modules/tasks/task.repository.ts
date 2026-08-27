@@ -265,6 +265,50 @@ export async function updateTaskById(
   return task ?? null
 }
 
+export async function updateRootTaskWithInheritedContext(
+  database: DatabaseConnection,
+  userId: string,
+  taskId: string,
+  values: TaskUpdateRow,
+  contextChanged: boolean,
+) {
+  return database.db.transaction(async (transaction) => {
+    const [task] = await transaction
+      .update(tasks)
+      .set(values)
+      .where(
+        and(
+          eq(tasks.id, taskId),
+          eq(tasks.userId, userId),
+          isNull(tasks.parentTaskId),
+        ),
+      )
+      .returning()
+
+    if (!task) {
+      return null
+    }
+
+    if (contextChanged) {
+      await transaction
+        .update(tasks)
+        .set({
+          projectId: task.projectId,
+          milestoneId: task.milestoneId,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(tasks.userId, userId),
+            eq(tasks.parentTaskId, task.id),
+          ),
+        )
+    }
+
+    return task
+  })
+}
+
 export async function updateSubtaskById(
   database: DatabaseConnection,
   userId: string,
