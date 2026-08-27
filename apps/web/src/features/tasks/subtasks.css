@@ -1,11 +1,11 @@
 .subtask-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.9rem;
 }
 
 .subtask-main {
   min-width: 0;
-  flex: 1;
 }
 
 .subtask-completion {
@@ -41,10 +41,10 @@
 .subtask-edit-input {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
-  border-radius: 0.65rem;
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
   padding: 0.65rem 0.75rem;
 }
 
@@ -57,9 +57,9 @@
 }
 
 .subtask-action-button {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.6rem;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
   color: inherit;
   min-height: 2.15rem;
   padding: 0.42rem 0.65rem;
@@ -67,7 +67,7 @@
 }
 
 .subtask-action-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg);
 }
 
 .subtask-action-button:disabled {
@@ -76,7 +76,7 @@
 }
 
 .subtask-action-button.danger {
-  color: #f3aaaa;
+  color: var(--crimson);
 }
 
 .subtask-order-controls {
@@ -96,13 +96,14 @@
 
 @media (max-width: 760px) {
   .subtask-row {
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: flex-start;
   }
 
   .subtask-actions {
+    grid-column: 2;
     width: 100%;
     justify-content: flex-start;
-    padding-left: 2.9rem;
   }
 
   .subtask-edit-form {
