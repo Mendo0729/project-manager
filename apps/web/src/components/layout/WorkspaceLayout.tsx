@@ -84,6 +84,13 @@ export function WorkspaceLayout() {
               <span className="nav-tab" />
               Proyectos
             </NavLink>
+            <NavLink
+              className={({ isActive }) => `app-nav-item${isActive ? ' active' : ''}`}
+              to="/tasks"
+            >
+              <span className="nav-tab" />
+              Tareas
+            </NavLink>
             <span className="app-nav-item disabled">
               <span className="nav-tab" />
               Planificación semanal
@@ -141,13 +148,13 @@ export function WorkspaceLayout() {
             <span className="mobile-dot" />
             Proyectos
           </NavLink>
+          <NavLink className={({ isActive }) => `mobile-tab${isActive ? ' active' : ''}`} to="/tasks">
+            <span className="mobile-dot" />
+            Tareas
+          </NavLink>
           <span className="mobile-tab disabled">
             <span className="mobile-dot" />
             Semana
-          </span>
-          <span className="mobile-tab disabled">
-            <span className="mobile-dot" />
-            Tareas
           </span>
         </nav>
 

@@ -11,6 +11,7 @@ import {
   listMilestones,
   reorderMilestones,
 } from '../milestones/milestones-api'
+import { ContextTaskPanel } from '../tasks/ContextTaskPanel'
 import { getProject, updateProject } from './projects-api'
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -329,13 +330,7 @@ export function ProjectDetailPage() {
         )}
       </section>
 
-      <section className="project-future-grid">
-        <article className="panel project-placeholder-card">
-          <span className="panel-label">Tareas</span>
-          <h2>Próximamente</h2>
-          <p>Las tareas se conectarán en la Fase 5.</p>
-        </article>
-      </section>
+      <ContextTaskPanel projectId={project.id} title="Trabajo del proyecto" />
     </section>
   )
 }
