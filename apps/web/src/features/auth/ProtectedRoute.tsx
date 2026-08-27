@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 
+import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout'
 import { useAuth } from './AuthProvider'
 
 export function ProtectedRoute() {
@@ -17,5 +18,5 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />
   }
 
-  return <Outlet />
+  return <WorkspaceLayout />
 }

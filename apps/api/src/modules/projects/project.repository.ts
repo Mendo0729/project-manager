@@ -4,12 +4,13 @@ import {
   desc,
   eq,
   ilike,
+  inArray,
   ne,
   or,
 } from 'drizzle-orm'
 
 import type { DatabaseConnection } from '@project-manager/database'
-import { activityLogs, projects } from '@project-manager/database'
+import { activityLogs, milestones, projects } from '@project-manager/database'
 import type { ProjectFilters } from '@project-manager/schemas'
 
 export type ProjectRow = typeof projects.$inferSelect
@@ -77,6 +78,24 @@ export async function findProjectById(
     .limit(1)
 
   return project ?? null
+}
+
+export async function listProjectMilestoneProgressRows(
+  database: DatabaseConnection,
+  projectIds: string[],
+) {
+  if (projectIds.length === 0) {
+    return []
+  }
+
+  return database.db
+    .select({
+      projectId: milestones.projectId,
+      status: milestones.status,
+      weight: milestones.weight,
+    })
+    .from(milestones)
+    .where(inArray(milestones.projectId, projectIds))
 }
 
 export async function insertProject(

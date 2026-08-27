@@ -3,6 +3,7 @@ import { createDatabase } from '@project-manager/database'
 import Fastify from 'fastify'
 
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
+import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.js'
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
 
 const app = Fastify({ logger: true })
@@ -20,6 +21,7 @@ await app.register(
 await app.register(
   async (projectApp) => {
     await registerProjectRoutes(projectApp, database)
+    await registerMilestoneRoutes(projectApp, database)
   },
   { prefix: '/projects' },
 )
