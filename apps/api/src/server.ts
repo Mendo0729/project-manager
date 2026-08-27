@@ -5,6 +5,10 @@ import Fastify from 'fastify'
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
 import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.js'
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
+import {
+  registerProjectTaskRoutes,
+  registerTaskRoutes,
+} from './modules/tasks/task.routes.js'
 
 const app = Fastify({ logger: true })
 const database = createDatabase()
@@ -22,8 +26,15 @@ await app.register(
   async (projectApp) => {
     await registerProjectRoutes(projectApp, database)
     await registerMilestoneRoutes(projectApp, database)
+    await registerProjectTaskRoutes(projectApp, database)
   },
   { prefix: '/projects' },
+)
+await app.register(
+  async (taskApp) => {
+    await registerTaskRoutes(taskApp, database)
+  },
+  { prefix: '/tasks' },
 )
 
 app.addHook('onClose', async () => {
