@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TaskDto, TaskStatus } from '@project-manager/schemas'
 
-import { listTasks } from './tasks-api'
+import { listTasks, reorderTasks } from './tasks-api'
+import './ordering.css'
 
 const statusLabels: Record<TaskStatus, string> = {
   backlog: 'Backlog',
@@ -33,7 +34,9 @@ export function TasksPage() {
   const [tasks, setTasks] = useState<TaskDto[]>([])
   const [status, setStatus] = useState<TaskStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [manualOrder, setManualOrder] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [reordering, setReordering] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,10 +45,14 @@ export function TasksPage() {
     setError(null)
 
     const timer = window.setTimeout(() => {
-      listTasks({
-        status: status === 'all' ? undefined : status,
-        search: search.trim() || undefined,
-      })
+      const request = manualOrder
+        ? listTasks({ personal: 'true', sort: 'position' })
+        : listTasks({
+            status: status === 'all' ? undefined : status,
+            search: search.trim() || undefined,
+          })
+
+      request
         .then((items) => {
           if (active) setTasks(items)
         })
@@ -67,7 +74,7 @@ export function TasksPage() {
       active = false
       window.clearTimeout(timer)
     }
-  }, [status, search])
+  }, [status, search, manualOrder])
 
   const stats = useMemo(() => {
     return {
@@ -77,6 +84,36 @@ export function TasksPage() {
       completed: tasks.filter((task) => task.status === 'completed').length,
     }
   }, [tasks])
+
+  async function movePersonalTask(index: number, offset: -1 | 1) {
+    if (!manualOrder || reordering) return
+
+    const targetIndex = index + offset
+    if (targetIndex < 0 || targetIndex >= tasks.length) return
+
+    const previous = tasks
+    const next = [...previous]
+    const [moved] = next.splice(index, 1)
+    if (!moved) return
+    next.splice(targetIndex, 0, moved)
+
+    setTasks(next)
+    setReordering(true)
+    setError(null)
+
+    try {
+      await reorderTasks(next.map((task) => task.id))
+    } catch (reorderError) {
+      setTasks(previous)
+      setError(
+        reorderError instanceof Error
+          ? reorderError.message
+          : 'No se pudo guardar el orden de las tareas personales.',
+      )
+    } finally {
+      setReordering(false)
+    }
+  }
 
   return (
     <section className="tasks-page">
@@ -120,8 +157,9 @@ export function TasksPage() {
         >
           {filterOptions.map((option) => (
             <button
-              aria-selected={status === option.value}
-              className={`chip${status === option.value ? ' active' : ''}`}
+              aria-selected={!manualOrder && status === option.value}
+              className={`chip${!manualOrder && status === option.value ? ' active' : ''}`}
+              disabled={manualOrder}
               key={option.value}
               onClick={() => setStatus(option.value)}
               role="tab"
@@ -130,6 +168,14 @@ export function TasksPage() {
               {option.label}
             </button>
           ))}
+          <button
+            aria-pressed={manualOrder}
+            className={`chip personal-order-toggle${manualOrder ? ' active' : ''}`}
+            onClick={() => setManualOrder((current) => !current)}
+            type="button"
+          >
+            Orden personal
+          </button>
         </div>
 
         <label className="task-search-wrap">
@@ -137,13 +183,24 @@ export function TasksPage() {
           <input
             aria-label="Buscar tareas"
             className="task-search"
+            disabled={manualOrder}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por título o descripción"
+            placeholder={
+              manualOrder
+                ? 'Desactiva Orden personal para buscar'
+                : 'Buscar por título o descripción'
+            }
             type="search"
             value={search}
           />
         </label>
       </div>
+
+      {manualOrder ? (
+        <p className="task-order-note">
+          Modo de orden manual: solo se muestran tareas personales. Usa las flechas para guardar su posición.
+        </p>
+      ) : null}
 
       {error ? <p className="form-error">{error}</p> : null}
 
@@ -157,39 +214,70 @@ export function TasksPage() {
         </section>
       ) : (
         <div className="task-list">
-          {tasks.map((task) => (
-            <Link
-              className={`task-row status-${task.status}`}
-              key={task.id}
-              to={`/tasks/${task.id}`}
-            >
-              <div className="task-row-main">
-                <div className="task-title-line">
-                  <strong>{task.title}</strong>
-                  <span className={`task-status-badge ${task.status}`}>
-                    {statusLabels[task.status]}
-                  </span>
+          {tasks.map((task, index) => {
+            const row = (
+              <Link
+                className={`task-row status-${task.status}`}
+                to={`/tasks/${task.id}`}
+              >
+                <div className="task-row-main">
+                  <div className="task-title-line">
+                    <strong>{task.title}</strong>
+                    <span className={`task-status-badge ${task.status}`}>
+                      {statusLabels[task.status]}
+                    </span>
+                  </div>
+                  <p>{task.description || 'Sin descripción.'}</p>
+                  <div className="task-meta-line">
+                    <span>{taskContext(task)}</span>
+                    <span>Prioridad {task.priority}</span>
+                    <span>Peso {task.weight}</span>
+                    {task.dueDate ? <span>Vence {task.dueDate}</span> : null}
+                    {task.estimatedMinutes != null ? (
+                      <span>{task.estimatedMinutes} min estimados</span>
+                    ) : null}
+                  </div>
                 </div>
-                <p>{task.description || 'Sin descripción.'}</p>
-                <div className="task-meta-line">
-                  <span>{taskContext(task)}</span>
-                  <span>Prioridad {task.priority}</span>
-                  <span>Peso {task.weight}</span>
-                  {task.dueDate ? <span>Vence {task.dueDate}</span> : null}
-                  {task.estimatedMinutes != null ? (
-                    <span>{task.estimatedMinutes} min estimados</span>
-                  ) : null}
-                </div>
-              </div>
 
-              <div className="task-progress-cell">
-                <strong>{task.progress}%</strong>
-                <div className="progress-track">
-                  <span style={{ width: `${task.progress}%` }} />
+                <div className="task-progress-cell">
+                  <strong>{task.progress}%</strong>
+                  <div className="progress-track">
+                    <span style={{ width: `${task.progress}%` }} />
+                  </div>
+                </div>
+              </Link>
+            )
+
+            if (!manualOrder) {
+              return <div key={task.id}>{row}</div>
+            }
+
+            return (
+              <div className="task-row-with-order" key={task.id}>
+                {row}
+                <div className="task-list-order-controls">
+                  <button
+                    aria-label={`Mover ${task.title} hacia arriba`}
+                    className="task-order-button"
+                    disabled={reordering || index === 0}
+                    onClick={() => void movePersonalTask(index, -1)}
+                    type="button"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    aria-label={`Mover ${task.title} hacia abajo`}
+                    className="task-order-button"
+                    disabled={reordering || index === tasks.length - 1}
+                    onClick={() => void movePersonalTask(index, 1)}
+                    type="button"
+                  >
+                    ↓
+                  </button>
                 </div>
               </div>
-            </Link>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>
