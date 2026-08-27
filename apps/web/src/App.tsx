@@ -9,7 +9,7 @@ import { MilestoneFormPage } from './features/milestones/MilestoneFormPage'
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage'
 import { ProjectFormPage } from './features/projects/ProjectFormPage'
 import { ProjectsPage } from './features/projects/ProjectsPage'
-import { TaskDetailPage } from './features/tasks/TaskDetailPage'
+import { TaskDetailWorkspacePage } from './features/tasks/TaskDetailWorkspacePage'
 import { TaskFormPage } from './features/tasks/TaskFormPage'
 import { TasksPage } from './features/tasks/TasksPage'
 import './features/projects/projects.css'
@@ -41,7 +41,7 @@ export default function App() {
         />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/tasks/new" element={<TaskFormPage />} />
-        <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+        <Route path="/tasks/:taskId" element={<TaskDetailWorkspacePage />} />
         <Route path="/tasks/:taskId/edit" element={<TaskFormPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
