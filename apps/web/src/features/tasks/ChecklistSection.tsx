@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -30,12 +29,6 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
   const [creating, setCreating] = useState(false)
   const [busyItemId, setBusyItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  const refresh = useCallback(async () => {
-    if (!taskId) return
-    const checklist = await listChecklist(taskId)
-    setItems(checklist)
-  }, [taskId])
 
   useEffect(() => {
     if (!taskId) {
@@ -78,7 +71,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!taskId || !title.trim()) return
+    if (!taskId || !title.trim() || busyItemId) return
 
     setCreating(true)
     setError(null)
@@ -186,7 +179,9 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
 
     try {
       await deleteChecklistItem(taskId, item.id)
-      setItems((current) => current.filter((currentItem) => currentItem.id !== item.id))
+      setItems((current) =>
+        current.filter((currentItem) => currentItem.id !== item.id),
+      )
       if (editingId === item.id) cancelEdit()
       onTaskChanged()
     } catch (deleteError) {
@@ -240,7 +235,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
           />
           <button
             className="primary-button"
-            disabled={creating || !title.trim()}
+            disabled={creating || busyItemId !== null || !title.trim()}
             type="submit"
           >
             {creating ? 'Agregando…' : 'Agregar'}
@@ -271,7 +266,7 @@ export function ChecklistSection({ onTaskChanged }: ChecklistSectionProps) {
                   </span>
                   <input
                     checked={item.isCompleted}
-                    disabled={busyItemId === item.id}
+                    disabled={busyItemId !== null}
                     onChange={(event) =>
                       void handleToggle(item, event.target.checked)
                     }
