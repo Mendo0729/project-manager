@@ -8,7 +8,15 @@ import type {
   UpdateTaskInput,
 } from '@project-manager/schemas'
 
-import { mapTask, mapTaskDetail } from './task.mapper.js'
+import {
+  calculateTaskProgress,
+  mapTask,
+  mapTaskDetail,
+} from './task.mapper.js'
+import {
+  listChecklistForProgress,
+  listSubtasksForProgress,
+} from './task-progress.repository.js'
 import {
   addTaskActivity,
   findOwnedMilestoneContext,
@@ -114,10 +122,7 @@ async function validateTaskContext(
   }
 }
 
-function taskStatusAction(
-  previous: TaskStatus,
-  next: TaskStatus,
-) {
+function taskStatusAction(previous: TaskStatus, next: TaskStatus) {
   if (previous === next) {
     return 'task.updated'
   }
@@ -135,6 +140,46 @@ function taskStatusAction(
   }
 
   return 'task.status_changed'
+}
+
+async function mapTaskRowsWithProgress(
+  database: DatabaseConnection,
+  userId: string,
+  rows: TaskRow[],
+) {
+  if (rows.length === 0) return []
+
+  const taskIds = rows.map((row) => row.id)
+  const [subtasks, checklist] = await Promise.all([
+    listSubtasksForProgress(database, userId, taskIds),
+    listChecklistForProgress(database, userId, taskIds),
+  ])
+
+  const subtasksByParent = new Map<string, TaskRow[]>()
+  for (const subtask of subtasks) {
+    if (!subtask.parentTaskId) continue
+    const items = subtasksByParent.get(subtask.parentTaskId) ?? []
+    items.push(subtask)
+    subtasksByParent.set(subtask.parentTaskId, items)
+  }
+
+  const checklistByTask = new Map<string, typeof checklist>()
+  for (const item of checklist) {
+    const items = checklistByTask.get(item.taskId) ?? []
+    items.push(item)
+    checklistByTask.set(item.taskId, items)
+  }
+
+  return rows.map((row) =>
+    mapTask(
+      row,
+      calculateTaskProgress(
+        row.status,
+        subtasksByParent.get(row.id) ?? [],
+        checklistByTask.get(row.id) ?? [],
+      ),
+    ),
+  )
 }
 
 export async function getTasks(
@@ -162,7 +207,7 @@ export async function getTasks(
   }
 
   const rows = await listTasks(database, userId, filters)
-  return rows.map((row) => mapTask(row))
+  return mapTaskRowsWithProgress(database, userId, rows)
 }
 
 export async function getTask(
@@ -336,7 +381,8 @@ export async function updateTask(
     },
   })
 
-  return mapTask(updated)
+  const [mapped] = await mapTaskRowsWithProgress(database, userId, [updated])
+  return mapped!
 }
 
 export async function getSubtasks(
@@ -346,7 +392,7 @@ export async function getSubtasks(
 ) {
   await requireRootTask(database, userId, taskId)
   const rows = await listSubtasks(database, userId, taskId)
-  return rows.map((row) => mapTask(row))
+  return mapTaskRowsWithProgress(database, userId, rows)
 }
 
 export async function createSubtask(
@@ -461,5 +507,6 @@ export async function updateSubtask(
     },
   })
 
-  return mapTask(updated)
+  const [mapped] = await mapTaskRowsWithProgress(database, userId, [updated])
+  return mapped!
 }
