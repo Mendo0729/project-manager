@@ -23,6 +23,10 @@ interface TasksResponse {
   tasks: TaskDto[]
 }
 
+interface TaskOrderResponse {
+  taskIds: string[]
+}
+
 interface SubtaskResponse {
   subtask: TaskDto
 }
@@ -129,6 +133,15 @@ export async function updateTask(taskId: string, input: UpdateTaskInput) {
   return response.task
 }
 
+export async function reorderTasks(taskIds: string[]) {
+  const response = await apiRequest<TaskOrderResponse>('/tasks/order', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ taskIds }),
+  })
+  return response.taskIds
+}
+
 export async function createSubtask(
   taskId: string,
   input: CreateSubtaskInput,
@@ -221,4 +234,16 @@ export async function deleteChecklistItem(taskId: string, itemId: string) {
     { method: 'DELETE' },
   )
   return response.deletedChecklistItemId
+}
+
+export async function reorderChecklist(taskId: string, itemIds: string[]) {
+  const response = await apiRequest<ChecklistResponse>(
+    `/tasks/${taskId}/checklist/order`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds }),
+    },
+  )
+  return response.checklist
 }
