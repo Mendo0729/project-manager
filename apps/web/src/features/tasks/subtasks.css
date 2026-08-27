@@ -1,4 +1,4 @@
-.subtask-row {
+.task-subtasks-section .subtask-row {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.9rem;
@@ -95,7 +95,7 @@
 }
 
 @media (max-width: 760px) {
-  .subtask-row {
+  .task-subtasks-section .subtask-row {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: flex-start;
   }
