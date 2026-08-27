@@ -1,0 +1,93 @@
+.checklist-order-controls,
+.task-order-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.checklist-order-button,
+.task-order-button {
+  min-width: 34px;
+  padding-inline: 8px;
+  font-family: var(--font-mono);
+}
+
+.task-compact-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.task-compact-item:last-child {
+  border-bottom: 0;
+}
+
+.task-compact-item .task-compact-row {
+  border-bottom: 0;
+}
+
+.task-order-button {
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.task-order-button:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+
+.task-order-note {
+  margin: 10px 0 0;
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.personal-order-toggle {
+  min-height: 36px;
+}
+
+.task-row-with-order {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-row-with-order .task-row {
+  width: 100%;
+}
+
+.task-list-order-controls {
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 760px) {
+  .task-compact-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+
+  .task-compact-item .task-order-controls {
+    justify-content: flex-start;
+    padding-left: 0;
+  }
+
+  .task-row-with-order {
+    grid-template-columns: 1fr;
+  }
+
+  .task-list-order-controls {
+    display: flex;
+    justify-content: flex-start;
+  }
+}
