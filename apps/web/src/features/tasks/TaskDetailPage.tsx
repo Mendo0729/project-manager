@@ -222,7 +222,7 @@ export function TaskDetailPage() {
             aria-valuemax={100}
             aria-valuemin={0}
             aria-valuenow={task.progress}
-            className="progress-track task-detail-progress-track"
+            className="task-detail-progress-track"
             role="progressbar"
           >
             <span style={{ width: `${task.progress}%` }} />
