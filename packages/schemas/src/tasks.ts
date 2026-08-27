@@ -28,7 +28,6 @@ const taskFieldsSchema = z.object({
     .number()
     .int()
     .min(0, 'El tiempo estimado no puede ser negativo.')
-    .max(525_600, 'El tiempo estimado es demasiado grande.')
     .nullable()
     .optional(),
   weight: z
