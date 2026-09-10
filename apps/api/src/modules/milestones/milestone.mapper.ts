@@ -14,11 +14,10 @@ export interface MilestoneRecord {
   updatedAt: Date
 }
 
-export function milestoneProgress(status: MilestoneRecord['status']) {
-  return status === 'completed' ? 100 : 0
-}
-
-export function mapMilestone(record: MilestoneRecord): MilestoneDto {
+export function mapMilestone(
+  record: MilestoneRecord,
+  calculatedProgress?: number,
+): MilestoneDto {
   return {
     id: record.id,
     projectId: record.projectId,
@@ -28,7 +27,10 @@ export function mapMilestone(record: MilestoneRecord): MilestoneDto {
     weight: record.weight,
     targetDate: record.targetDate,
     position: record.position,
-    progress: milestoneProgress(record.status),
+    progress:
+      record.status === 'completed'
+        ? 100
+        : Math.max(0, Math.min(100, calculatedProgress ?? 0)),
     completedAt: record.completedAt?.toISOString() ?? null,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
