@@ -1,7 +1,7 @@
-import { and, asc, eq, max } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm'
 
 import type { DatabaseConnection } from '@project-manager/database'
-import { activityLogs, milestones } from '@project-manager/database'
+import { activityLogs, milestones, tasks } from '@project-manager/database'
 import type { MilestoneFilters } from '@project-manager/schemas'
 
 export type MilestoneRow = typeof milestones.$inferSelect
@@ -43,6 +43,25 @@ export async function findMilestoneById(
     .limit(1)
 
   return milestone ?? null
+}
+
+export async function listMilestoneTaskProgressRows(
+  database: DatabaseConnection,
+  userId: string,
+  milestoneIds: string[],
+) {
+  if (milestoneIds.length === 0) return []
+
+  return database.db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        inArray(tasks.milestoneId, milestoneIds),
+        isNull(tasks.parentTaskId),
+      ),
+    )
 }
 
 export async function getNextMilestonePosition(
