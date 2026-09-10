@@ -144,7 +144,7 @@ export function MilestoneDetailPage() {
             <span style={{ width: `${milestone.progress}%` }} />
           </div>
           <p>
-            Las tareas ya están vinculadas al hito. El cálculo ponderado del progreso del hito se conectará en el paso 5.10.
+            Calculado con las tareas principales no canceladas del hito y su peso. Las subtareas y checklists alimentan el progreso de su tarea sin contarse dos veces.
           </p>
         </article>
       </section>
