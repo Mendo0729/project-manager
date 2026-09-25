@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useMemo, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { useAuth } from '../../features/auth/AuthProvider'
@@ -18,6 +18,12 @@ export function WorkspaceLayout() {
   const { user, logout } = useAuth()
   const [dark, setDark] = useState(getInitialTheme)
 
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+
+    return () => document.documentElement.classList.remove('dark')
+  }, [dark])
+
   const stars = useMemo(
     () =>
       Array.from({ length: 72 }, (_, index) => ({
@@ -35,7 +41,6 @@ export function WorkspaceLayout() {
   function toggleTheme() {
     const next = !dark
     setDark(next)
-    document.documentElement.classList.toggle('dark', next)
     window.localStorage.setItem('project-manager-theme', next ? 'dark' : 'light')
   }
 

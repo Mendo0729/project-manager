@@ -22,7 +22,7 @@ La matriz de aislamiento cubre `GET`, `POST`, `PATCH`, `PUT` y `DELETE` en las r
 
 - Las vistas usan rutas protegidas y el estado de usuario se limpia después de `logout`.
 - No se usa `dangerouslySetInnerHTML` ni `innerHTML` en el frontend.
-- Los estilos incluyen modo oscuro y reglas para anchos de pantalla menores.
+- Los estilos incluyen modo oscuro y reglas para anchos de pantalla menores. El layout aplica la preferencia de tema guardada al montar y limpia la clase al salir.
 - El service worker generado precarga archivos estáticos; no contiene una regla de cache para `/api`.
 
 ## Pendiente antes del merge a `main`
@@ -30,5 +30,7 @@ La matriz de aislamiento cubre `GET`, `POST`, `PATCH`, `PUT` y `DELETE` en las r
 - Comprobación visual y funcional en navegador de responsive y modo oscuro.
 - Probar logout y posterior login de otro usuario en el mismo navegador con la PWA instalada, incluida la navegación sin conexión.
 - Revisar CSRF en el despliegue productivo con su proxy y dominio reales. El control de origen añadido cubre navegadores que envían `Sec-Fetch-Site` u `Origin`; las solicitudes sin ambas cabeceras siguen admitidas para clientes no navegador.
+
+El intento de captura automática con Firefox headless del servidor no produjo una imagen: la instalación Snap no pudo abrir un perfil de prueba aislado. Por ello, la validación visual sigue pendiente.
 
 Hasta completar esas verificaciones, el merge de la Fase 5 queda pendiente.
