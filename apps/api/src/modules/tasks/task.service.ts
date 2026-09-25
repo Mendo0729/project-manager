@@ -206,6 +206,17 @@ export async function getTasks(
     )
   }
 
+  if (filters.parentTaskId) {
+    const parent = await requireTask(database, userId, filters.parentTaskId)
+
+    if (
+      (filters.projectId && parent.projectId !== filters.projectId) ||
+      (filters.milestoneId && parent.milestoneId !== filters.milestoneId)
+    ) {
+      throw new TaskNotFoundError('Tarea no encontrada.')
+    }
+  }
+
   const rows = await listTasks(database, userId, filters)
   return mapTaskRowsWithProgress(database, userId, rows)
 }

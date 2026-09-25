@@ -6,6 +6,8 @@ import { SESSION_COOKIE_NAME, getSessionUser } from '../../modules/auth/session.
 
 export function createRequireAuth(database: DatabaseConnection) {
   return async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
+    reply.header('Cache-Control', 'no-store')
+
     const user = await getSessionUser(
       database,
       request.cookies[SESSION_COOKIE_NAME],

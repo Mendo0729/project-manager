@@ -206,10 +206,11 @@ export async function reorderMilestones(
   const existing = await listMilestonesByProject(database, projectId)
   const existingIds = new Set(existing.map((milestone) => milestone.id))
 
-  if (
-    existing.length !== input.milestoneIds.length ||
-    input.milestoneIds.some((milestoneId) => !existingIds.has(milestoneId))
-  ) {
+  if (input.milestoneIds.some((milestoneId) => !existingIds.has(milestoneId))) {
+    throw new MilestoneNotFoundError('Hito no encontrado.')
+  }
+
+  if (existing.length !== input.milestoneIds.length) {
     throw new MilestoneValidationError(
       'La lista de orden debe contener exactamente todos los hitos del proyecto.',
     )

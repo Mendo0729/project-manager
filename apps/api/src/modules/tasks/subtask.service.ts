@@ -91,11 +91,11 @@ export async function reorderSubtasks(
   const current = await listSubtasks(database, userId, parent.id)
   const currentIds = new Set(current.map((subtask) => subtask.id))
 
-  const isExactSet =
-    current.length === input.subtaskIds.length &&
-    input.subtaskIds.every((subtaskId) => currentIds.has(subtaskId))
+  if (input.subtaskIds.some((subtaskId) => !currentIds.has(subtaskId))) {
+    throw new SubtaskNotFoundError('Subtarea no encontrada.')
+  }
 
-  if (!isExactSet) {
+  if (current.length !== input.subtaskIds.length) {
     throw new SubtaskValidationError(
       'El nuevo orden debe incluir exactamente todas las subtareas de la tarea.',
     )
