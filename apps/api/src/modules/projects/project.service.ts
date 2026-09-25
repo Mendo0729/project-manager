@@ -5,6 +5,7 @@ import type {
 } from '@project-manager/schemas'
 import type { DatabaseConnection } from '@project-manager/database'
 
+import { getMilestoneProgressMap } from '../milestones/milestone-progress.service.js'
 import { mapProject } from './project.mapper.js'
 import {
   addProjectActivity,
@@ -30,6 +31,7 @@ function calculateAutomaticProgress(
   rows: Array<{
     status: 'planned' | 'active' | 'completed' | 'canceled'
     weight: number
+    progress: number
   }>,
 ) {
   const included = rows.filter((row) => row.status !== 'canceled')
@@ -39,29 +41,41 @@ function calculateAutomaticProgress(
     return 0
   }
 
-  const completedWeight = included
-    .filter((row) => row.status === 'completed')
-    .reduce((total, row) => total + row.weight, 0)
+  const weightedProgress = included.reduce(
+    (total, row) => total + row.progress * row.weight,
+    0,
+  )
 
-  return Math.round((completedWeight / totalWeight) * 100)
+  return Math.round(weightedProgress / totalWeight)
 }
 
 async function getAutomaticProgressMap(
   database: DatabaseConnection,
+  userId: string,
   projectIds: string[],
 ) {
-  const rows = await listProjectMilestoneProgressRows(database, projectIds)
+  const rows = await listProjectMilestoneProgressRows(database, userId, projectIds)
+  const milestoneProgress = await getMilestoneProgressMap(
+    database,
+    userId,
+    rows.filter((row) => row.status !== 'canceled'),
+  )
   const grouped = new Map<
     string,
     Array<{
       status: 'planned' | 'active' | 'completed' | 'canceled'
       weight: number
+      progress: number
     }>
   >()
 
   for (const row of rows) {
     const projectRows = grouped.get(row.projectId) ?? []
-    projectRows.push({ status: row.status, weight: row.weight })
+    projectRows.push({
+      status: row.status,
+      weight: row.weight,
+      progress: milestoneProgress.get(row.id) ?? 0,
+    })
     grouped.set(row.projectId, projectRows)
   }
 
@@ -81,6 +95,7 @@ export async function getProjects(
   const rows = await listProjects(database, userId, filters)
   const progress = await getAutomaticProgressMap(
     database,
+    userId,
     rows.filter((row) => row.progressMode === 'automatic').map((row) => row.id),
   )
 
@@ -100,7 +115,7 @@ export async function getProject(
 
   const progress =
     project.progressMode === 'automatic'
-      ? await getAutomaticProgressMap(database, [project.id])
+      ? await getAutomaticProgressMap(database, userId, [project.id])
       : new Map<string, number>()
 
   return mapProject(project, progress.get(project.id) ?? 0)
@@ -228,7 +243,7 @@ export async function updateProject(
 
   const progress =
     updated.progressMode === 'automatic'
-      ? await getAutomaticProgressMap(database, [updated.id])
+      ? await getAutomaticProgressMap(database, userId, [updated.id])
       : new Map<string, number>()
 
   return mapProject(updated, progress.get(updated.id) ?? 0)

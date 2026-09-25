@@ -21,11 +21,9 @@ export function mapProject(
   automaticProgress = 0,
 ): ProjectDto {
   const progress =
-    record.status === 'completed'
-      ? 100
-      : record.progressMode === 'manual'
-        ? (record.manualProgress ?? 0)
-        : automaticProgress
+    record.progressMode === 'manual'
+      ? (record.manualProgress ?? 0)
+      : automaticProgress
 
   return {
     id: record.id,
