@@ -2,14 +2,27 @@ import cookie from '@fastify/cookie'
 import { createDatabase } from '@project-manager/database'
 import Fastify from 'fastify'
 
+import { rejectCrossOriginMutation } from './common/http/reject-cross-origin-mutation.js'
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
 import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.js'
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
+import { registerChecklistRoutes } from './modules/tasks/checklist.routes.js'
+import { registerSubtaskManagementRoutes } from './modules/tasks/subtask.routes.js'
+import { registerTaskOrderRoutes } from './modules/tasks/task-order.routes.js'
+import {
+  registerTagRoutes,
+  registerTaskTagRoutes,
+} from './modules/tasks/tag.routes.js'
+import {
+  registerProjectTaskRoutes,
+  registerTaskRoutes,
+} from './modules/tasks/task.routes.js'
 
 const app = Fastify({ logger: true })
 const database = createDatabase()
 
 app.decorateRequest('authUser', null)
+app.addHook('onRequest', rejectCrossOriginMutation)
 
 await app.register(cookie)
 await app.register(
@@ -22,8 +35,25 @@ await app.register(
   async (projectApp) => {
     await registerProjectRoutes(projectApp, database)
     await registerMilestoneRoutes(projectApp, database)
+    await registerProjectTaskRoutes(projectApp, database)
   },
   { prefix: '/projects' },
+)
+await app.register(
+  async (tagApp) => {
+    await registerTagRoutes(tagApp, database)
+  },
+  { prefix: '/tags' },
+)
+await app.register(
+  async (taskApp) => {
+    await registerTaskRoutes(taskApp, database)
+    await registerSubtaskManagementRoutes(taskApp, database)
+    await registerChecklistRoutes(taskApp, database)
+    await registerTaskOrderRoutes(taskApp, database)
+    await registerTaskTagRoutes(taskApp, database)
+  },
+  { prefix: '/tasks' },
 )
 
 app.addHook('onClose', async () => {

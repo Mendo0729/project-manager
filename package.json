@@ -10,6 +10,7 @@
     "dev": "pnpm build:deps && pnpm --parallel --filter @project-manager/web --filter @project-manager/api dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm build:deps && pnpm -r typecheck",
+    "test": "pnpm --filter @project-manager/api test",
     "db:generate": "pnpm --filter @project-manager/database db:generate",
     "db:migrate": "pnpm --filter @project-manager/database db:migrate",
     "db:studio": "pnpm --filter @project-manager/database db:studio",

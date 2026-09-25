@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsc --noEmit -p tsconfig.test.json && tsx --test tests/*.test.ts",
     "auth:create-user": "tsx src/scripts/create-initial-user.ts"
   },
   "dependencies": {

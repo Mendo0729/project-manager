@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { MilestoneDto, MilestoneStatus } from '@project-manager/schemas'
 
+import { ContextTaskPanel } from '../tasks/ContextTaskPanel'
 import { getMilestone, updateMilestone } from './milestones-api'
 
 const statusLabels: Record<MilestoneStatus, string> = {
@@ -143,7 +144,7 @@ export function MilestoneDetailPage() {
             <span style={{ width: `${milestone.progress}%` }} />
           </div>
           <p>
-            En la Fase 4 el hito aporta 100% al completarse. En la Fase 5 su progreso podrá calcularse a partir de tareas.
+            Calculado con las tareas principales no canceladas del hito y su peso. Las subtareas y checklists alimentan el progreso de su tarea sin contarse dos veces.
           </p>
         </article>
       </section>
@@ -196,13 +197,11 @@ export function MilestoneDetailPage() {
         </div>
       </section>
 
-      <section className="project-future-grid">
-        <article className="panel project-placeholder-card">
-          <span className="panel-label">Tareas</span>
-          <h2>Próximamente</h2>
-          <p>Las tareas vinculadas a este hito se implementarán en la Fase 5.</p>
-        </article>
-      </section>
+      <ContextTaskPanel
+        milestoneId={milestone.id}
+        projectId={projectId}
+        title="Trabajo del hito"
+      />
     </section>
   )
 }

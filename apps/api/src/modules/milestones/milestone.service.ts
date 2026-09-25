@@ -8,6 +8,7 @@ import type {
 
 import { findProjectById } from '../projects/project.repository.js'
 import { mapMilestone } from './milestone.mapper.js'
+import { getMilestoneProgressMap } from './milestone-progress.service.js'
 import {
   addMilestoneActivity,
   findMilestoneById,
@@ -16,6 +17,7 @@ import {
   listMilestonesByProject,
   replaceMilestoneOrder,
   updateMilestoneById,
+  type MilestoneRow,
 } from './milestone.repository.js'
 
 export class MilestoneNotFoundError extends Error {}
@@ -49,6 +51,15 @@ async function requireMilestone(
   return milestone
 }
 
+async function mapMilestonesWithProgress(
+  database: DatabaseConnection,
+  userId: string,
+  rows: MilestoneRow[],
+) {
+  const progress = await getMilestoneProgressMap(database, userId, rows)
+  return rows.map((row) => mapMilestone(row, progress.get(row.id) ?? 0))
+}
+
 export async function getMilestones(
   database: DatabaseConnection,
   userId: string,
@@ -57,7 +68,7 @@ export async function getMilestones(
 ) {
   await requireOwnedProject(database, userId, projectId)
   const rows = await listMilestonesByProject(database, projectId, filters)
-  return rows.map(mapMilestone)
+  return mapMilestonesWithProgress(database, userId, rows)
 }
 
 export async function getMilestone(
@@ -68,7 +79,8 @@ export async function getMilestone(
 ) {
   await requireOwnedProject(database, userId, projectId)
   const milestone = await requireMilestone(database, projectId, milestoneId)
-  return mapMilestone(milestone)
+  const [mapped] = await mapMilestonesWithProgress(database, userId, [milestone])
+  return mapped!
 }
 
 export async function createMilestone(
@@ -110,7 +122,7 @@ export async function createMilestone(
     },
   })
 
-  return mapMilestone(milestone)
+  return mapMilestone(milestone, 0)
 }
 
 export async function updateMilestone(
@@ -179,7 +191,8 @@ export async function updateMilestone(
     },
   })
 
-  return mapMilestone(updated)
+  const [mapped] = await mapMilestonesWithProgress(database, userId, [updated])
+  return mapped!
 }
 
 export async function reorderMilestones(
@@ -193,10 +206,11 @@ export async function reorderMilestones(
   const existing = await listMilestonesByProject(database, projectId)
   const existingIds = new Set(existing.map((milestone) => milestone.id))
 
-  if (
-    existing.length !== input.milestoneIds.length ||
-    input.milestoneIds.some((milestoneId) => !existingIds.has(milestoneId))
-  ) {
+  if (input.milestoneIds.some((milestoneId) => !existingIds.has(milestoneId))) {
+    throw new MilestoneNotFoundError('Hito no encontrado.')
+  }
+
+  if (existing.length !== input.milestoneIds.length) {
     throw new MilestoneValidationError(
       'La lista de orden debe contener exactamente todos los hitos del proyecto.',
     )
@@ -223,5 +237,5 @@ export async function reorderMilestones(
   }
 
   const reordered = await listMilestonesByProject(database, projectId)
-  return reordered.map(mapMilestone)
+  return mapMilestonesWithProgress(database, userId, reordered)
 }

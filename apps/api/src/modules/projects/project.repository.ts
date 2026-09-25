@@ -82,6 +82,7 @@ export async function findProjectById(
 
 export async function listProjectMilestoneProgressRows(
   database: DatabaseConnection,
+  userId: string,
   projectIds: string[],
 ) {
   if (projectIds.length === 0) {
@@ -90,12 +91,16 @@ export async function listProjectMilestoneProgressRows(
 
   return database.db
     .select({
+      id: milestones.id,
       projectId: milestones.projectId,
       status: milestones.status,
       weight: milestones.weight,
     })
     .from(milestones)
-    .where(inArray(milestones.projectId, projectIds))
+    .innerJoin(projects, eq(milestones.projectId, projects.id))
+    .where(
+      and(eq(projects.userId, userId), inArray(milestones.projectId, projectIds)),
+    )
 }
 
 export async function insertProject(
