@@ -2,6 +2,7 @@ import cookie from '@fastify/cookie'
 import { createDatabase } from '@project-manager/database'
 import Fastify from 'fastify'
 
+import { rejectCrossOriginMutation } from './common/http/reject-cross-origin-mutation.js'
 import { registerAuthRoutes } from './modules/auth/auth.routes.js'
 import { registerMilestoneRoutes } from './modules/milestones/milestone.routes.js'
 import { registerProjectRoutes } from './modules/projects/project.routes.js'
@@ -21,6 +22,7 @@ const app = Fastify({ logger: true })
 const database = createDatabase()
 
 app.decorateRequest('authUser', null)
+app.addHook('onRequest', rejectCrossOriginMutation)
 
 await app.register(cookie)
 await app.register(
